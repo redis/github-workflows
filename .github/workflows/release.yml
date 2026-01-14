@@ -1,200 +1,130 @@
-name: Release
+name: Gradle Release (Axion)
 
 on:
   workflow_call:
     inputs:
-      commit-name:
-        default: Julien Ruaux
-        type: string
-        required: false
-      branch:
-        default: 'main'
+      java-version:
+        description: 'Java version to use'
+        default: '17'
         required: false
         type: string
       version:
+        description: 'Release version (e.g., 0.5.1). Leave empty to auto-increment.'
         required: false
         type: string
-      version-type:
-        description: 'Version bump type (major, minor, patch). Ignored if version is explicitly set.'
+      version-increment:
+        description: 'Version increment type (used if version is not specified)'
         default: 'patch'
         required: false
         type: string
+      gradle-build-tasks:
+        description: 'Gradle tasks to run after creating release tag (e.g., "build publish")'
+        default: 'build'
+        required: false
+        type: string
       jreleaser-version:
+        description: 'JReleaser version to use'
         default: 'latest'
         required: false
         type: string
-      java-version:
-        default: '21'
+      clone-to-dist-repo:
+        description: 'Whether to clone release to a -dist repository'
+        default: true
         required: false
-        type: string
-      tasks:
-        default: 'build aggregateTestReports publish'
-        required: false
-        type: string
-      build-docs:
-        default: false
+        type: boolean
+      update-antora-version:
+        description: 'Whether to update docs/antora.yml version after release'
+        default: true
         required: false
         type: boolean
     secrets:
-      commit-email:
-        required: false
-      github-user:
-        required: false
-      github-token:
+      git-access-token:
+        description: 'GitHub token with write access'
         required: true
       gpg-passphrase:
+        description: 'GPG passphrase for signing'
         required: true
       gpg-public-key:
+        description: 'GPG public key'
         required: true
       gpg-secret-key:
+        description: 'GPG secret key'
         required: true
       sonatype-username:
+        description: 'Sonatype username for Maven Central'
         required: false
       sonatype-password:
-        required: false
-      docker-username:
-        required: false
-      docker-password:
-        required: false
-      docker-github-username:
-        required: false
-      docker-github-password:
+        description: 'Sonatype password for Maven Central'
         required: false
       slack-webhook:
+        description: 'Slack webhook URL for notifications'
         required: false
-      algolia-app-id:
+      docker-username:
+        description: 'Docker registry username (for bootBuildImage)'
         required: false
-      algolia-api-key:
-        required: false
-      algolia-index-name:
+      docker-password:
+        description: 'Docker registry password (for bootBuildImage)'
         required: false
 
 jobs:
   release:
-    name: Release
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pages: write
-      id-token: write
-    steps:
-      - name: Cancel previous run
-        uses: styfle/cancel-workflow-action@0.12.1
-        with:
-          access_token: ${{ secrets.github-token }}
+      packages: write
 
+    steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch }}
           fetch-depth: 0
+          token: ${{ secrets.git-access-token }}
 
       - name: Setup Gradle
-        uses: redis-field-engineering/redis-github-workflows/.github/actions/setup-gradle@main
+        uses: redis/github-workflows/.github/actions/setup-gradle@main
         with:
           java-version: ${{ inputs.java-version }}
 
-      - name: Calculate Version
-        id: calc_version
-        uses: redis-field-engineering/redis-github-workflows/.github/actions/calculate-version@main
+      - name: Create Release Tag
+        id: release
+        uses: redis/github-workflows/.github/actions/create-release-tag@main
         with:
           version: ${{ inputs.version }}
-          version-type: ${{ inputs.version-type }}
-
-      - name: Set Release Version
-        uses: redis-field-engineering/redis-github-workflows/.github/actions/set-version@main
-        with:
-          version: ${{ steps.calc_version.outputs.version }}
-          commit: true
-          commit-message: 'Releasing version {version}'
-          commit-name: ${{ inputs.commit-name }}
-          commit-email: ${{ secrets.commit-email }}
-          push: true
-          branch: ${{ inputs.branch }}
+          version-increment: ${{ inputs.version-increment }}
+          git-access-token: ${{ secrets.git-access-token }}
 
       - name: Build
-        run: |
-          ./gradlew -Pprofile=release -PreproducibleBuild=true ${{ inputs.tasks }} -S
         env:
-          GRGIT_USER: ${{ secrets.github-user }}
-          GRGIT_PASS: ${{ secrets.github-token }}
+          DOCKER_USERNAME: ${{ secrets.docker-username }}
+          DOCKER_PASSWORD: ${{ secrets.docker-password }}
+        run: ./gradlew ${{ inputs.gradle-build-tasks }}
 
-      - name: Upload test reports
-        if: failure()
-        uses: actions/upload-artifact@v4
+      - name: Release with JReleaser
+        uses: redis/github-workflows/.github/actions/jreleaser@main
         with:
-          name: test-reports
-          path: |
-            build/reports/aggregate-tests/
+          version: ${{ steps.release.outputs.version }}
+          git-access-token: ${{ secrets.git-access-token }}
+          gpg-secret-key: ${{ secrets.gpg-secret-key }}
+          gpg-public-key: ${{ secrets.gpg-public-key }}
+          gpg-passphrase: ${{ secrets.gpg-passphrase }}
+          sonatype-username: ${{ secrets.sonatype-username }}
+          sonatype-password: ${{ secrets.sonatype-password }}
+          slack-webhook: ${{ secrets.slack-webhook }}
+          docker-username: ${{ secrets.docker-username }}
+          docker-password: ${{ secrets.docker-password }}
+          jreleaser-version: ${{ inputs.jreleaser-version }}
 
-      - name: Assemble
-        uses: jreleaser/release-action@v2
+      - name: Clone to Dist Repo
+        if: inputs.clone-to-dist-repo
+        uses: redis/github-workflows/.github/actions/clone-to-dist-repo@main
         with:
-          arguments: assemble
-          version: ${{ inputs.jreleaser-version }}
-        env:
-          JRELEASER_PROJECT_VERSION: ${{ steps.calc_version.outputs.version }}
+          git-access-token: ${{ secrets.git-access-token }}
+          source-repo: ${{ github.repository }}
+          dest-repo: ${{ github.repository }}-dist
 
-      - name: Release
-        uses: jreleaser/release-action@v2
+      - name: Update Antora Version
+        if: inputs.update-antora-version
+        uses: redis/github-workflows/.github/actions/update-antora-version@main
         with:
-          arguments: full-release
-          version: ${{ inputs.jreleaser-version }}
-        env:
-          JRELEASER_BRANCH: ${{ inputs.branch }}
-          JRELEASER_DOCKER_GITHUB_USERNAME: ${{ secrets.docker-github-username }}
-          JRELEASER_DOCKER_GITHUB_PASSWORD: ${{ secrets.docker-github-password }}
-          JRELEASER_DOCKER_DEFAULT_USERNAME: ${{ secrets.docker-username }}
-          JRELEASER_DOCKER_DEFAULT_PASSWORD: ${{ secrets.docker-password }}
-          JRELEASER_GITHUB_PASSWORD: ${{ secrets.github-token }}
-          JRELEASER_GITHUB_TOKEN: ${{ secrets.github-token }}
-          JRELEASER_GITHUB_USERNAME: ${{ secrets.github-user }}
-          JRELEASER_GPG_PASSPHRASE: ${{ secrets.gpg-passphrase }}
-          JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.gpg-public-key }}
-          JRELEASER_GPG_SECRET_KEY: ${{ secrets.gpg-secret-key }}
-          JRELEASER_MAVENCENTRAL_USERNAME: ${{ secrets.sonatype-username }}
-          JRELEASER_MAVENCENTRAL_PASSWORD: ${{ secrets.sonatype-password }}
-          JRELEASER_PROJECT_VERSION: ${{ steps.calc_version.outputs.version }}
-          JRELEASER_SLACK_WEBHOOK: ${{ secrets.slack-webhook }}
-
-      - name: JReleaser output
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifact
-          path: |
-            out/jreleaser/trace.log
-            out/jreleaser/output.properties
-
-      - name: Configure Pages
-        if: inputs.build-docs
-        uses: actions/configure-pages@v5
-
-      - name: Build documentation
-        if: inputs.build-docs
-        uses: redis-field-engineering/redis-github-workflows/.github/actions/build-docs@main
-        with:
-          algolia-app-id: ${{ secrets.algolia-app-id }}
-          algolia-api-key: ${{ secrets.algolia-api-key }}
-          algolia-index-name: ${{ secrets.algolia-index-name }}
-
-      - name: Upload Pages artifact
-        if: inputs.build-docs
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: build/site
-
-      - name: Deploy to GitHub Pages
-        if: inputs.build-docs
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-      - name: Bump to Next Snapshot Version
-        uses: redis-field-engineering/redis-github-workflows/.github/actions/bump-snapshot-version@main
-        with:
-          release-version: ${{ steps.calc_version.outputs.version }}
-          commit: true
-          commit-name: ${{ inputs.commit-name }}
-          commit-email: ${{ secrets.commit-email }}
-          push: true
-          branch: ${{ inputs.branch }}
+          version: ${{ steps.release.outputs.version }}
+          git-access-token: ${{ secrets.git-access-token }}

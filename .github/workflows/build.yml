@@ -1,34 +1,46 @@
-name: Build
+name: Gradle Build (Simple)
 
 on:
   workflow_call:
     inputs:
       java-version:
-        default: '21'
+        description: 'Java version to use'
+        default: '17'
+        required: false
+        type: string
+      gradle-tasks:
+        description: 'Gradle tasks to run'
+        default: 'build'
         required: false
         type: string
 
 jobs:
   build:
-    name: Build
+    name: Build and Test
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Setup Gradle
-        uses: redis-field-engineering/redis-github-workflows/.github/actions/setup-gradle@main
+      - name: Set up JDK
+        uses: actions/setup-java@v4
         with:
           java-version: ${{ inputs.java-version }}
+          distribution: 'temurin'
+          cache: 'gradle'
 
-      - name: Build
-        run: |
-          ./gradlew build aggregateTestReports -S
-        
-      - name: Upload test reports
-        if: failure()
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build and test
+        run: ./gradlew ${{ inputs.gradle-tasks }}
+
+      - name: Upload test results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
+          name: test-results
           path: |
-            build/reports/aggregate-tests/
+            **/build/reports/tests/
+            **/build/test-results/
