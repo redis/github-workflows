@@ -1,14 +1,14 @@
-= Redis Github Workflows
+= Redis GitHub Workflows
 :toc: left
 :icons: font
 :source-highlighter: highlight.js
 :imagesdir: ./images
 
-This repository contains reusable GitHub workflows for Redis projects.
+This repository contains reusable GitHub Actions workflows for Redis projects.
 
 == Release
 
-This section describes the GitHub Actions workflow defined in `.github/workflows/release.yml` from the https://github.com/redis-field-engineering/redis-github-workflows[Redis Field Engineering GitHub Workflows] repository. 
+This section describes the GitHub Actions workflow defined in `.github/workflows/release.yml` from the https://github.com/redis/github-workflows[Redis GitHub Workflows] repository.
 This workflow provides a reusable release process for Gradle-based projects that can be called from other repositories, handling versioning, building, testing, and publishing to various platforms including Maven Central and Docker Hub.
 
 === Prerequisites
@@ -312,7 +312,7 @@ on:
 
 jobs:
   release:
-    uses: redis-field-engineering/redis-github-workflows/.github/workflows/release.yml@main
+    uses: redis/github-workflows/.github/workflows/release.yml@main
     with:
       version: ${{ github.event.inputs.version }}
       branch: ${{ github.event.inputs.branch }}
