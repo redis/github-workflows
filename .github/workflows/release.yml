@@ -27,6 +27,11 @@ on:
         default: 'latest'
         required: false
         type: string
+      jreleaser-arguments:
+        description: 'Additional JReleaser arguments to run before full-release (e.g., "assemble --assembler jlink")'
+        default: ''
+        required: false
+        type: string
       clone-to-dist-repo:
         description: 'Whether to clone release to a -dist repository'
         default: true
@@ -98,6 +103,15 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.docker-username }}
           DOCKER_PASSWORD: ${{ secrets.docker-password }}
         run: ./gradlew ${{ inputs.gradle-build-tasks }}
+
+      - name: JReleaser Pre-Release
+        if: inputs.jreleaser-arguments != ''
+        uses: redis/github-workflows/.github/actions/jreleaser@main
+        with:
+          version: ${{ steps.release.outputs.version }}
+          git-access-token: ${{ secrets.git-access-token }}
+          jreleaser-version: ${{ inputs.jreleaser-version }}
+          arguments: ${{ inputs.jreleaser-arguments }}
 
       - name: Release with JReleaser
         uses: redis/github-workflows/.github/actions/jreleaser@main
