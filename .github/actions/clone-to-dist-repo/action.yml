@@ -6,11 +6,13 @@ inputs:
     description: 'GitHub token with access to both repos'
     required: true
   source-repo:
-    description: 'Source repository (e.g., owner/repo)'
-    required: true
+    description: 'Source repository (e.g., owner/repo). Defaults to current repository.'
+    required: false
+    default: ${{ github.repository }}
   dest-repo:
-    description: 'Destination repository (e.g., owner/repo-dist)'
-    required: true
+    description: 'Destination repository (e.g., owner/repo-dist). Defaults to source-repo with -dist suffix.'
+    required: false
+    default: ${{ github.repository }}-dist
 
 runs:
   using: 'composite'
