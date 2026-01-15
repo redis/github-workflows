@@ -32,6 +32,12 @@ inputs:
   docker-password:
     description: 'Docker registry password'
     required: false
+  homebrew-github-token:
+    description: 'GitHub token for Homebrew tap repository'
+    required: false
+  homebrew-github-username:
+    description: 'GitHub username for Homebrew tap repository'
+    required: false
   jreleaser-version:
     description: 'JReleaser version'
     required: false
@@ -59,6 +65,8 @@ runs:
         JRELEASER_SLACK_WEBHOOK: ${{ inputs.slack-webhook }}
         JRELEASER_DOCKER_DEFAULT_USERNAME: ${{ inputs.docker-username }}
         JRELEASER_DOCKER_DEFAULT_PASSWORD: ${{ inputs.docker-password }}
+        JRELEASER_HOMEBREW_GITHUB_TOKEN: ${{ inputs.homebrew-github-token }}
+        JRELEASER_HOMEBREW_GITHUB_USERNAME: ${{ inputs.homebrew-github-username }}
         JRELEASER_PROJECT_VERSION: ${{ inputs.version }}
 
     - name: Upload JReleaser Logs
