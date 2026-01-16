@@ -120,11 +120,16 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.docker-password }}
         run: ./gradlew ${{ inputs.gradle-build-tasks }}
 
+      - name: Configure AWS credentials
+        if: inputs.pre-release-script != '' && secrets.aws-access-key-id != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.aws-access-key-id }}
+          aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
+          aws-region: us-east-1
+
       - name: Pre-Release Script
         if: inputs.pre-release-script != ''
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.aws-access-key-id }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws-secret-access-key }}
         run: ${{ inputs.pre-release-script }}
 
       - name: JReleaser Pre-Release
