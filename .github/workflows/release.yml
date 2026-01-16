@@ -47,11 +47,11 @@ on:
         default: 'ubuntu-latest'
         required: false
         type: string
-      ecr-public-login:
-        description: 'Whether to login to Amazon ECR Public for Docker push'
-        default: false
+      pre-release-script:
+        description: 'Shell script to run after build and before JReleaser (e.g., for ECR login, S3 uploads, etc.)'
+        default: ''
         required: false
-        type: boolean
+        type: string
     secrets:
       git-access-token:
         description: 'GitHub token with write access'
@@ -79,12 +79,6 @@ on:
         required: false
       docker-password:
         description: 'Docker registry password (for bootBuildImage)'
-        required: false
-      aws-access-key-id:
-        description: 'AWS access key ID (required if ecr-public-login is true)'
-        required: false
-      aws-secret-access-key:
-        description: 'AWS secret access key (required if ecr-public-login is true)'
         required: false
 
 jobs:
@@ -120,18 +114,9 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.docker-password }}
         run: ./gradlew ${{ inputs.gradle-build-tasks }}
 
-      - name: Configure AWS credentials
-        if: inputs.ecr-public-login
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.aws-access-key-id }}
-          aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
-          aws-region: us-east-1
-
-      - name: Login to Amazon ECR Public
-        if: inputs.ecr-public-login
-        run: |
-          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+      - name: Pre-Release Script
+        if: inputs.pre-release-script != ''
+        run: ${{ inputs.pre-release-script }}
 
       - name: JReleaser Pre-Release
         if: inputs.jreleaser-arguments != ''
