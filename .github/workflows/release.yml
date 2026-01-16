@@ -52,6 +52,11 @@ on:
         default: ''
         required: false
         type: string
+      skip-announce:
+        description: 'Skip announcements (Slack, etc.) for this release'
+        default: false
+        required: false
+        type: boolean
     secrets:
       git-access-token:
         description: 'GitHub token with write access'
@@ -152,7 +157,7 @@ jobs:
           gpg-passphrase: ${{ secrets.gpg-passphrase }}
           sonatype-username: ${{ secrets.sonatype-username }}
           sonatype-password: ${{ secrets.sonatype-password }}
-          slack-webhook: ${{ secrets.slack-webhook }}
+          slack-webhook: ${{ inputs.skip-announce && '' || secrets.slack-webhook }}
           docker-username: ${{ secrets.docker-username }}
           docker-password: ${{ secrets.docker-password }}
           jreleaser-version: ${{ inputs.jreleaser-version }}
