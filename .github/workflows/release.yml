@@ -152,6 +152,7 @@ jobs:
           jreleaser-version: ${{ inputs.jreleaser-version }}
           arguments: ${{ inputs.jreleaser-arguments }}
           skip-announce: ${{ inputs.skip-announce }}
+          artifact-name-suffix: '-pre-release'
 
       - name: Release with JReleaser
         uses: redis/github-workflows/.github/actions/jreleaser@main
