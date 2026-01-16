@@ -57,6 +57,11 @@ on:
         default: false
         required: false
         type: boolean
+      skip-tests:
+        description: 'Skip tests during build (replaces "build" with "assemble" in gradle-build-tasks)'
+        default: false
+        required: false
+        type: boolean
     secrets:
       git-access-token:
         description: 'GitHub token with write access'
@@ -123,7 +128,13 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.docker-username }}
           DOCKER_PASSWORD: ${{ secrets.docker-password }}
-        run: ./gradlew ${{ inputs.gradle-build-tasks }}
+        run: |
+          TASKS="${{ inputs.gradle-build-tasks }}"
+          if [ "${{ inputs.skip-tests }}" = "true" ]; then
+            # Replace 'build' with 'assemble' to skip tests
+            TASKS="${TASKS//build/assemble}"
+          fi
+          ./gradlew $TASKS
 
       - name: Configure AWS credentials
         if: inputs.pre-release-script != ''
