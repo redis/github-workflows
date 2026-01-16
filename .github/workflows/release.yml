@@ -80,6 +80,12 @@ on:
       docker-password:
         description: 'Docker registry password (for bootBuildImage)'
         required: false
+      aws-access-key-id:
+        description: 'AWS access key ID (for pre-release-script)'
+        required: false
+      aws-secret-access-key:
+        description: 'AWS secret access key (for pre-release-script)'
+        required: false
 
 jobs:
   release:
@@ -116,6 +122,9 @@ jobs:
 
       - name: Pre-Release Script
         if: inputs.pre-release-script != ''
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws-access-key-id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws-secret-access-key }}
         run: ${{ inputs.pre-release-script }}
 
       - name: JReleaser Pre-Release
