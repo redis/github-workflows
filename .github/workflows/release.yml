@@ -42,6 +42,31 @@ on:
         default: true
         required: false
         type: boolean
+      runs-on:
+        description: 'Runner to use for the release job'
+        default: 'ubuntu-latest'
+        required: false
+        type: string
+      aws-region:
+        description: 'AWS region for ECR login (if using ECR)'
+        default: 'us-east-1'
+        required: false
+        type: string
+      ecr-login:
+        description: 'Whether to login to Amazon ECR Public'
+        default: false
+        required: false
+        type: boolean
+      s3-upload-path:
+        description: 'S3 path to upload CloudFormation templates (e.g., s3://bucket/path/file.yaml). Leave empty to skip.'
+        default: ''
+        required: false
+        type: string
+      s3-upload-source:
+        description: 'Local file path to upload to S3 (e.g., cloudformation/template.yaml)'
+        default: ''
+        required: false
+        type: string
     secrets:
       git-access-token:
         description: 'GitHub token with write access'
@@ -70,10 +95,16 @@ on:
       docker-password:
         description: 'Docker registry password (for bootBuildImage)'
         required: false
+      aws-access-key-id:
+        description: 'AWS access key ID (required if ecr-login is true or s3-upload-path is set)'
+        required: false
+      aws-secret-access-key:
+        description: 'AWS secret access key (required if ecr-login is true or s3-upload-path is set)'
+        required: false
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on }}
     permissions:
       contents: write
       packages: write
@@ -103,6 +134,25 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.docker-username }}
           DOCKER_PASSWORD: ${{ secrets.docker-password }}
         run: ./gradlew ${{ inputs.gradle-build-tasks }}
+
+      - name: Configure AWS credentials
+        if: inputs.ecr-login || inputs.s3-upload-path != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.aws-access-key-id }}
+          aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - name: Upload to S3
+        if: inputs.s3-upload-path != ''
+        run: |
+          aws s3 cp ${{ inputs.s3-upload-source }} ${{ inputs.s3-upload-path }} --region ${{ inputs.aws-region }}
+          echo "File uploaded to ${{ inputs.s3-upload-path }}"
+
+      - name: Login to Amazon ECR Public
+        if: inputs.ecr-login
+        run: |
+          aws ecr-public get-login-password --region ${{ inputs.aws-region }} | docker login --username AWS --password-stdin public.ecr.aws
 
       - name: JReleaser Pre-Release
         if: inputs.jreleaser-arguments != ''
