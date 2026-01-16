@@ -26,6 +26,10 @@ inputs:
   slack-webhook:
     description: 'Slack webhook URL'
     required: false
+  skip-announce:
+    description: 'Skip announcements (sets JRELEASER_ANNOUNCE_SLACK_ACTIVE to NEVER)'
+    required: false
+    default: 'false'
   docker-username:
     description: 'Docker registry username'
     required: false
@@ -57,6 +61,7 @@ runs:
         JRELEASER_MAVENCENTRAL_USERNAME: ${{ inputs.sonatype-username }}
         JRELEASER_MAVENCENTRAL_PASSWORD: ${{ inputs.sonatype-password }}
         JRELEASER_SLACK_WEBHOOK: ${{ inputs.slack-webhook }}
+        JRELEASER_ANNOUNCE_SLACK_ACTIVE: ${{ inputs.skip-announce == 'true' && 'NEVER' || '' }}
         JRELEASER_DOCKER_DEFAULT_USERNAME: ${{ inputs.docker-username }}
         JRELEASER_DOCKER_DEFAULT_PASSWORD: ${{ inputs.docker-password }}
         JRELEASER_PROJECT_VERSION: ${{ inputs.version }}

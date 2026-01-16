@@ -151,6 +151,7 @@ jobs:
           git-access-token: ${{ secrets.git-access-token }}
           jreleaser-version: ${{ inputs.jreleaser-version }}
           arguments: ${{ inputs.jreleaser-arguments }}
+          skip-announce: ${{ inputs.skip-announce }}
 
       - name: Release with JReleaser
         uses: redis/github-workflows/.github/actions/jreleaser@main
@@ -162,10 +163,11 @@ jobs:
           gpg-passphrase: ${{ secrets.gpg-passphrase }}
           sonatype-username: ${{ secrets.sonatype-username }}
           sonatype-password: ${{ secrets.sonatype-password }}
-          slack-webhook: ${{ inputs.skip-announce && '' || secrets.slack-webhook }}
+          slack-webhook: ${{ secrets.slack-webhook }}
           docker-username: ${{ secrets.docker-username }}
           docker-password: ${{ secrets.docker-password }}
           jreleaser-version: ${{ inputs.jreleaser-version }}
+          skip-announce: ${{ inputs.skip-announce }}
 
       - name: Clone to Dist Repo
         if: inputs.clone-to-dist-repo
