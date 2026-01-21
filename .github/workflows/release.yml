@@ -184,3 +184,11 @@ jobs:
         with:
           version: ${{ steps.release.outputs.version }}
           git-access-token: ${{ secrets.git-access-token }}
+
+      - name: Cleanup Tag on Failure
+        if: failure() && steps.release.outputs.version != ''
+        run: |
+          echo "Release failed, cleaning up tag v${{ steps.release.outputs.version }}"
+          git push --delete origin "v${{ steps.release.outputs.version }}" || true
+          git tag -d "v${{ steps.release.outputs.version }}" || true
+          echo "Tag cleanup completed"
