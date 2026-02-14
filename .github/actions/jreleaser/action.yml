@@ -48,6 +48,10 @@ inputs:
     description: 'Suffix for artifact name to avoid conflicts when called multiple times'
     required: false
     default: ''
+  working-directory:
+    description: 'Working directory for JReleaser'
+    required: false
+    default: '.'
 
 runs:
   using: 'composite'
@@ -57,6 +61,7 @@ runs:
       with:
         arguments: ${{ inputs.arguments }}
         version: ${{ inputs.jreleaser-version }}
+        working-directory: ${{ inputs.working-directory }}
       env:
         JRELEASER_GITHUB_TOKEN: ${{ inputs.git-access-token }}
         JRELEASER_GPG_PASSPHRASE: ${{ inputs.gpg-passphrase }}
@@ -76,5 +81,5 @@ runs:
       with:
         name: jreleaser-logs${{ inputs.artifact-name-suffix }}
         path: |
-          out/jreleaser/trace.log
-          out/jreleaser/output.properties
+          ${{ inputs.working-directory }}/out/jreleaser/trace.log
+          ${{ inputs.working-directory }}/out/jreleaser/output.properties

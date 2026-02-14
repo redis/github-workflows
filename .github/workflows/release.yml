@@ -62,6 +62,11 @@ on:
         default: false
         required: false
         type: boolean
+      working-directory:
+        description: 'Working directory for Gradle and JReleaser commands'
+        default: '.'
+        required: false
+        type: string
     secrets:
       git-access-token:
         description: 'GitHub token with write access'
@@ -123,8 +128,10 @@ jobs:
           version: ${{ inputs.version }}
           version-increment: ${{ inputs.version-increment }}
           git-access-token: ${{ secrets.git-access-token }}
+          working-directory: ${{ inputs.working-directory }}
 
       - name: Build
+        working-directory: ${{ inputs.working-directory }}
         env:
           DOCKER_USERNAME: ${{ secrets.docker-username }}
           DOCKER_PASSWORD: ${{ secrets.docker-password }}
@@ -141,6 +148,7 @@ jobs:
 
       - name: Pre-Release Script
         if: inputs.pre-release-script != ''
+        working-directory: ${{ inputs.working-directory }}
         run: ${{ inputs.pre-release-script }}
 
       - name: JReleaser Pre-Release
@@ -153,6 +161,7 @@ jobs:
           arguments: ${{ inputs.jreleaser-arguments }}
           skip-announce: ${{ inputs.skip-announce }}
           artifact-name-suffix: '-pre-release'
+          working-directory: ${{ inputs.working-directory }}
 
       - name: Release with JReleaser
         uses: redis/github-workflows/.github/actions/jreleaser@main
@@ -169,6 +178,7 @@ jobs:
           docker-password: ${{ secrets.docker-password }}
           jreleaser-version: ${{ inputs.jreleaser-version }}
           skip-announce: ${{ inputs.skip-announce }}
+          working-directory: ${{ inputs.working-directory }}
 
       - name: Clone to Dist Repo
         if: inputs.clone-to-dist-repo

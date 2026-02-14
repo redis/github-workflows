@@ -12,6 +12,10 @@ inputs:
   git-access-token:
     description: 'GitHub token for pushing tags'
     required: true
+  working-directory:
+    description: 'Working directory for Gradle commands'
+    required: false
+    default: '.'
 
 outputs:
   version:
@@ -30,6 +34,7 @@ runs:
     - name: Create Release Tag
       id: create_tag
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       env:
         GITHUB_TOKEN: ${{ inputs.git-access-token }}
       run: |
