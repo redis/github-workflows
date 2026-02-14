@@ -1,0 +1,26 @@
+# Generated Documentation
+
+This directory contains auto-generated documentation.
+
+## Contents
+
+Store here:
+- Database schemas
+- API specifications (OpenAPI, GraphQL)
+- Type definitions
+- Dependency graphs
+
+## Important
+
+- Do NOT manually edit files in this directory
+- Regenerate using appropriate tooling
+- Include generation timestamp in each file
+
+## Generation Commands
+
+Document commands here as they are established:
+
+| File | Command | Source |
+|------|---------|--------|
+| *db-schema.md* | *TODO* | *migrations/* |
+
