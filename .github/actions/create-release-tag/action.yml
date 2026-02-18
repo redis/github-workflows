@@ -16,6 +16,10 @@ inputs:
     description: 'Working directory for Gradle commands'
     required: false
     default: '.'
+  tag-prefix:
+    description: 'Tag prefix (e.g., "v", "java-client-v")'
+    required: false
+    default: 'v'
 
 outputs:
   version:
@@ -58,4 +62,4 @@ runs:
         RELEASE_VERSION: ${{ steps.create_tag.outputs.version }}
       run: |
         git fetch --tags
-        git checkout "v$RELEASE_VERSION"
+        git checkout "${{ inputs.tag-prefix }}$RELEASE_VERSION"
