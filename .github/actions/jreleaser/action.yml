@@ -52,6 +52,10 @@ inputs:
     description: 'Working directory for JReleaser'
     required: false
     default: '.'
+  git-root-search:
+    description: 'Enable git root search for monorepos (sets JRELEASER_GIT_ROOT_SEARCH)'
+    required: false
+    default: 'true'
 
 runs:
   using: 'composite'
@@ -74,6 +78,7 @@ runs:
         JRELEASER_DOCKER_DEFAULT_USERNAME: ${{ inputs.docker-username }}
         JRELEASER_DOCKER_DEFAULT_PASSWORD: ${{ inputs.docker-password }}
         JRELEASER_PROJECT_VERSION: ${{ inputs.version }}
+        JRELEASER_GIT_ROOT_SEARCH: ${{ inputs.git-root-search }}
 
     - name: Upload JReleaser Logs
       if: always()
