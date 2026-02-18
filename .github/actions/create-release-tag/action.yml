@@ -41,14 +41,15 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       env:
         GITHUB_TOKEN: ${{ inputs.git-access-token }}
+        TAG_PREFIX: ${{ inputs.tag-prefix }}
       run: |
         if [ -n "${{ inputs.version }}" ]; then
-          ./gradlew release -Prelease.version=${{ inputs.version }} -Prelease.disableChecks
+          ./gradlew release -Prelease.version=${{ inputs.version }} -Prelease.tagPrefix="${TAG_PREFIX}" -Prelease.disableChecks
         else
           # Capitalize first letter of version-increment (patch -> Patch, minor -> Minor, major -> Major)
           INCREMENT="${{ inputs.version-increment }}"
           INCREMENT_CAPITALIZED="$(tr '[:lower:]' '[:upper:]' <<< ${INCREMENT:0:1})${INCREMENT:1}"
-          ./gradlew release -Prelease.versionIncrementer=increment${INCREMENT_CAPITALIZED} -Prelease.disableChecks
+          ./gradlew release -Prelease.versionIncrementer=increment${INCREMENT_CAPITALIZED} -Prelease.tagPrefix="${TAG_PREFIX}" -Prelease.disableChecks
         fi
 
         # Get the version that was just tagged
@@ -60,6 +61,7 @@ runs:
       shell: bash
       env:
         RELEASE_VERSION: ${{ steps.create_tag.outputs.version }}
+        TAG_PREFIX: ${{ inputs.tag-prefix }}
       run: |
         git fetch --tags
-        git checkout "${{ inputs.tag-prefix }}$RELEASE_VERSION"
+        git checkout "${TAG_PREFIX}${RELEASE_VERSION}"

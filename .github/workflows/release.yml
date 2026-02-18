@@ -72,6 +72,11 @@ on:
         default: 'v'
         required: false
         type: string
+      git-root-search:
+        description: 'Search for Git root directory (for monorepo support)'
+        default: false
+        required: false
+        type: boolean
     secrets:
       git-access-token:
         description: 'GitHub token with write access'
@@ -168,6 +173,7 @@ jobs:
           skip-announce: ${{ inputs.skip-announce }}
           artifact-name-suffix: '-pre-release'
           working-directory: ${{ inputs.working-directory }}
+          git-root-search: ${{ inputs.git-root-search }}
 
       - name: Release with JReleaser
         uses: redis/github-workflows/.github/actions/jreleaser@main
@@ -185,6 +191,7 @@ jobs:
           jreleaser-version: ${{ inputs.jreleaser-version }}
           skip-announce: ${{ inputs.skip-announce }}
           working-directory: ${{ inputs.working-directory }}
+          git-root-search: ${{ inputs.git-root-search }}
 
       - name: Clone to Dist Repo
         if: inputs.clone-to-dist-repo

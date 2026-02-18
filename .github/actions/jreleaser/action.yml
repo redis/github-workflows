@@ -52,6 +52,10 @@ inputs:
     description: 'Working directory for JReleaser'
     required: false
     default: '.'
+  git-root-search:
+    description: 'Search for Git root directory (for monorepo support)'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -63,6 +67,7 @@ runs:
         version: ${{ inputs.jreleaser-version }}
         working-directory: ${{ inputs.working-directory }}
       env:
+        JRELEASER_GIT_ROOT_SEARCH: ${{ inputs.git-root-search }}
         JRELEASER_GITHUB_TOKEN: ${{ inputs.git-access-token }}
         JRELEASER_GPG_PASSPHRASE: ${{ inputs.gpg-passphrase }}
         JRELEASER_GPG_PUBLIC_KEY: ${{ inputs.gpg-public-key }}
