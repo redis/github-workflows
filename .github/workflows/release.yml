@@ -67,6 +67,11 @@ on:
         default: '.'
         required: false
         type: string
+      tag-prefix:
+        description: 'Tag prefix (e.g., "v", "java-client-v")'
+        default: 'v'
+        required: false
+        type: string
     secrets:
       git-access-token:
         description: 'GitHub token with write access'
@@ -129,6 +134,7 @@ jobs:
           version-increment: ${{ inputs.version-increment }}
           git-access-token: ${{ secrets.git-access-token }}
           working-directory: ${{ inputs.working-directory }}
+          tag-prefix: ${{ inputs.tag-prefix }}
 
       - name: Build
         working-directory: ${{ inputs.working-directory }}
@@ -198,7 +204,7 @@ jobs:
       - name: Cleanup Tag on Failure
         if: failure() && steps.release.outputs.version != ''
         run: |
-          echo "Release failed, cleaning up tag v${{ steps.release.outputs.version }}"
-          git push --delete origin "v${{ steps.release.outputs.version }}" || true
-          git tag -d "v${{ steps.release.outputs.version }}" || true
+          echo "Release failed, cleaning up tag ${{ inputs.tag-prefix }}${{ steps.release.outputs.version }}"
+          git push --delete origin "${{ inputs.tag-prefix }}${{ steps.release.outputs.version }}" || true
+          git tag -d "${{ inputs.tag-prefix }}${{ steps.release.outputs.version }}" || true
           echo "Tag cleanup completed"
