@@ -77,6 +77,15 @@ on:
         default: false
         required: false
         type: boolean
+      aws-role-arn:
+        description: 'AWS IAM role ARN for OIDC authentication (for pre-release-script)'
+        required: false
+        type: string
+      aws-region:
+        description: 'AWS region (used with aws-role-arn or aws secrets)'
+        default: 'us-east-1'
+        required: false
+        type: string
     secrets:
       git-access-token:
         description: 'GitHub token with write access'
@@ -106,10 +115,10 @@ on:
         description: 'Docker registry password (for bootBuildImage)'
         required: false
       aws-access-key-id:
-        description: 'AWS access key ID (for pre-release-script)'
+        description: 'AWS access key ID (for pre-release-script, alternative to OIDC)'
         required: false
       aws-secret-access-key:
-        description: 'AWS secret access key (for pre-release-script)'
+        description: 'AWS secret access key (for pre-release-script, alternative to OIDC)'
         required: false
 
 jobs:
@@ -118,6 +127,7 @@ jobs:
     permissions:
       contents: write
       packages: write
+      id-token: write  # Required for AWS OIDC
 
     steps:
       - name: Checkout
@@ -149,12 +159,13 @@ jobs:
         run: ./gradlew ${{ inputs.gradle-build-tasks }} ${{ inputs.skip-tests && '-x test' || '' }}
 
       - name: Configure AWS credentials
-        if: inputs.pre-release-script != ''
-        uses: aws-actions/configure-aws-credentials@v4
+        if: inputs.pre-release-script != '' && (inputs.aws-role-arn != '' || (secrets.aws-access-key-id != '' && secrets.aws-secret-access-key != ''))
+        uses: redis/github-workflows/.github/actions/configure-aws@main
         with:
+          aws-role-arn: ${{ inputs.aws-role-arn }}
           aws-access-key-id: ${{ secrets.aws-access-key-id }}
           aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
-          aws-region: us-east-1
+          aws-region: ${{ inputs.aws-region }}
         continue-on-error: true
 
       - name: Pre-Release Script

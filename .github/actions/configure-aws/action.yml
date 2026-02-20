@@ -1,0 +1,61 @@
+name: 'Configure AWS Credentials'
+description: 'Configure AWS credentials using OIDC (preferred) or static credentials'
+
+inputs:
+  aws-role-arn:
+    description: 'AWS IAM role ARN for OIDC authentication (recommended)'
+    required: false
+  aws-access-key-id:
+    description: 'AWS access key ID (fallback if OIDC role not provided)'
+    required: false
+  aws-secret-access-key:
+    description: 'AWS secret access key (fallback if OIDC role not provided)'
+    required: false
+  aws-region:
+    description: 'AWS region'
+    required: false
+    default: 'us-east-1'
+  role-session-name:
+    description: 'Session name for OIDC role assumption'
+    required: false
+    default: 'github-actions'
+
+outputs:
+  aws-configured:
+    description: 'Whether AWS credentials were configured'
+    value: ${{ steps.check.outputs.configured }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check AWS configuration
+      id: check
+      shell: bash
+      run: |
+        if [[ -n "${{ inputs.aws-role-arn }}" ]]; then
+          echo "configured=true" >> $GITHUB_OUTPUT
+          echo "method=oidc" >> $GITHUB_OUTPUT
+        elif [[ -n "${{ inputs.aws-access-key-id }}" && -n "${{ inputs.aws-secret-access-key }}" ]]; then
+          echo "configured=true" >> $GITHUB_OUTPUT
+          echo "method=static" >> $GITHUB_OUTPUT
+        else
+          echo "configured=false" >> $GITHUB_OUTPUT
+          echo "method=none" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Configure AWS credentials (OIDC)
+      if: steps.check.outputs.method == 'oidc'
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.aws-role-arn }}
+        role-session-name: ${{ inputs.role-session-name }}
+        aws-region: ${{ inputs.aws-region }}
+
+    - name: Configure AWS credentials (Static)
+      if: steps.check.outputs.method == 'static'
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ${{ inputs.aws-region }}
+
