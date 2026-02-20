@@ -55,7 +55,6 @@ jobs:
           cache: 'gradle'
 
       - name: Configure AWS credentials
-        if: inputs.aws-role-arn != '' || (secrets.aws-access-key-id != '' && secrets.aws-secret-access-key != '')
         uses: redis/github-workflows/.github/actions/configure-aws@main
         with:
           aws-role-arn: ${{ inputs.aws-role-arn }}
