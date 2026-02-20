@@ -21,6 +21,7 @@ uses: redis/github-workflows/.github/actions/jreleaser@main
 │   └── docs.yml         # Antora documentation build + GitHub Pages
 └── actions/             # Composite actions
     ├── setup-gradle/    # Java + Gradle setup with caching
+    ├── configure-aws/   # AWS credentials via OIDC or static keys
     ├── jreleaser/       # GitHub release, Maven Central, Docker, Slack
     ├── create-release-tag/  # Axion-based version tagging
     ├── build-docs/      # Antora documentation builder
@@ -42,6 +43,7 @@ uses: redis/github-workflows/.github/actions/jreleaser@main
 | Action | Purpose |
 |--------|---------|
 | `setup-gradle` | Setup Java (Temurin) + Gradle with caching |
+| `configure-aws` | Configure AWS credentials via OIDC (preferred) or static credentials |
 | `jreleaser` | Run JReleaser for releases, signing, publishing |
 | `create-release-tag` | Create Git tag using Axion release plugin |
 | `build-docs` | Build Antora documentation with Algolia search |
