@@ -83,6 +83,9 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.docker-password }}
         run: ./gradlew ${{ inputs.gradle-build-tasks }} ${{ inputs.skip-tests && '-x test' || '' }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Release with JReleaser
         uses: redis/github-workflows/.github/actions/jreleaser@main
         with:
