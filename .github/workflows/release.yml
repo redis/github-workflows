@@ -159,7 +159,7 @@ jobs:
         run: ./gradlew ${{ inputs.gradle-build-tasks }} ${{ inputs.skip-tests && '-x test' || '' }}
 
       - name: Configure AWS credentials
-        if: inputs.pre-release-script != '' && (inputs.aws-role-arn != '' || (secrets.aws-access-key-id != '' && secrets.aws-secret-access-key != ''))
+        if: inputs.pre-release-script != ''
         uses: redis/github-workflows/.github/actions/configure-aws@main
         with:
           aws-role-arn: ${{ inputs.aws-role-arn }}
