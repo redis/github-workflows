@@ -207,6 +207,21 @@ jobs:
           working-directory: ${{ inputs.working-directory }}
           git-root-search: ${{ inputs.git-root-search }}
 
+      - name: Cleanup disk space
+        run: |
+          echo "Disk usage before cleanup:"
+          df -h
+          # Remove Docker images to free up space (they've already been pushed)
+          docker system prune -af --volumes || true
+          # Remove Gradle caches that are no longer needed
+          rm -rf ~/.gradle/caches/build-cache-* || true
+          # Remove build directories
+          rm -rf ${{ inputs.working-directory }}/build/libs/*.jar || true
+          rm -rf ${{ inputs.working-directory }}/build/distributions/*.tar || true
+          rm -rf ${{ inputs.working-directory }}/build/distributions/*.zip || true
+          echo "Disk usage after cleanup:"
+          df -h
+
       - name: Clone to Dist Repo
         if: inputs.clone-to-dist-repo
         uses: redis/github-workflows/.github/actions/clone-to-dist-repo@main
