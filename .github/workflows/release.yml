@@ -42,6 +42,21 @@ on:
         default: true
         required: false
         type: boolean
+      antora-version:
+        description: 'Optional explicit version to set in docs/antora.yml. Defaults to the release version.'
+        default: ''
+        required: false
+        type: string
+      antora-display-version:
+        description: 'Optional display_version to set in docs/antora.yml.'
+        default: ''
+        required: false
+        type: string
+      antora-prerelease:
+        description: 'Optional prerelease value to set in docs/antora.yml.'
+        default: ''
+        required: false
+        type: string
       runs-on:
         description: 'Runner to use for the release job'
         default: 'ubuntu-latest'
@@ -234,7 +249,9 @@ jobs:
         if: inputs.update-antora-version
         uses: redis/github-workflows/.github/actions/update-antora-version@main
         with:
-          version: ${{ steps.release.outputs.version }}
+          version: ${{ inputs.antora-version != '' && inputs.antora-version || steps.release.outputs.version }}
+          display-version: ${{ inputs.antora-display-version }}
+          prerelease: ${{ inputs.antora-prerelease }}
           git-access-token: ${{ secrets.git-access-token }}
 
       - name: Cleanup Tag on Failure

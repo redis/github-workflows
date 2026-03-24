@@ -2,6 +2,17 @@ name: Build and Deploy Documentation
 
 on:
   workflow_call:
+    inputs:
+      checkout-fetch-depth:
+        description: 'Checkout fetch depth. Use 0 to fetch full history for Antora tag/branch discovery.'
+        default: '1'
+        required: false
+        type: string
+      checkout-fetch-tags:
+        description: 'Whether checkout should fetch tags.'
+        default: false
+        required: false
+        type: boolean
     secrets:
       algolia-app-id:
         required: false
@@ -25,6 +36,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          fetch-depth: ${{ inputs.checkout-fetch-depth }}
+          fetch-tags: ${{ inputs.checkout-fetch-tags }}
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Build documentation
