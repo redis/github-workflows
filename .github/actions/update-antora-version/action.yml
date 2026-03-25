@@ -5,6 +5,12 @@ inputs:
   version:
     description: 'Version to set in antora.yml'
     required: true
+  display-version:
+    description: 'Optional display_version to set in antora.yml'
+    required: false
+  prerelease:
+    description: 'Optional prerelease value to set in antora.yml'
+    required: false
   git-access-token:
     description: 'GitHub token for pushing changes'
     required: true
@@ -16,6 +22,8 @@ runs:
       shell: bash
       env:
         RELEASE_VERSION: ${{ inputs.version }}
+        DISPLAY_VERSION: ${{ inputs.display-version }}
+        PRERELEASE: ${{ inputs.prerelease }}
         GITHUB_TOKEN: ${{ inputs.git-access-token }}
       run: |
         # Checkout main branch
@@ -31,6 +39,24 @@ runs:
         # Update version in antora.yml
         sed -i.bak "s/^version:.*/version: $RELEASE_VERSION/" docs/antora.yml
         rm -f docs/antora.yml.bak
+
+        if [ -n "$DISPLAY_VERSION" ]; then
+          if grep -q '^display_version:' docs/antora.yml; then
+            sed -i.bak "s/^display_version:.*/display_version: $DISPLAY_VERSION/" docs/antora.yml
+            rm -f docs/antora.yml.bak
+          else
+            printf '\ndisplay_version: %s\n' "$DISPLAY_VERSION" >> docs/antora.yml
+          fi
+        fi
+
+        if [ -n "$PRERELEASE" ]; then
+          if grep -q '^prerelease:' docs/antora.yml; then
+            sed -i.bak "s/^prerelease:.*/prerelease: $PRERELEASE/" docs/antora.yml
+            rm -f docs/antora.yml.bak
+          else
+            printf 'prerelease: %s\n' "$PRERELEASE" >> docs/antora.yml
+          fi
+        fi
         
         # Check if there are changes
         if git diff --quiet docs/antora.yml; then
