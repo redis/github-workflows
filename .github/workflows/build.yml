@@ -36,6 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      checks: write
       id-token: write  # Required for OIDC
 
     steps:
