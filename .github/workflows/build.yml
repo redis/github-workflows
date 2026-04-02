@@ -71,3 +71,24 @@ jobs:
           path: |
             **/build/reports/tests/
             **/build/test-results/
+          if-no-files-found: ignore
+
+      - name: Publish JUnit test report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Gradle Test Results
+          path: '**/build/test-results/test/*.xml'
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-diagnostics
+          path: |
+            **/build/reports/problems/
+            **/build/reports/tests/test/
+            **/build/test-results/test/
+          if-no-files-found: ignore
