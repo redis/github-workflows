@@ -54,7 +54,7 @@ runs:
             sed -i.bak "s/^prerelease:.*/prerelease: $PRERELEASE/" docs/antora.yml
             rm -f docs/antora.yml.bak
           else
-            printf 'prerelease: %s\n' "$PRERELEASE" >> docs/antora.yml
+            printf '\nprerelease: %s\n' "$PRERELEASE" >> docs/antora.yml
           fi
         fi
         
