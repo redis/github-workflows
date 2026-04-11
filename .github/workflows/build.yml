@@ -3,9 +3,19 @@ name: Gradle Build (Simple)
 on:
   workflow_call:
     inputs:
+      job-name:
+        description: 'Display name for the job'
+        default: 'Build and Test'
+        required: false
+        type: string
       java-version:
         description: 'Java version to use'
         default: '17'
+        required: false
+        type: string
+      runs-on:
+        description: 'Runner label to use for the job'
+        default: 'ubuntu-latest'
         required: false
         type: string
       gradle-tasks:
@@ -29,11 +39,14 @@ on:
       aws-secret-access-key:
         description: 'AWS secret access key (alternative to OIDC)'
         required: false
+      unlock-public-key:
+        description: 'Base64-encoded Ed25519 public key for unlock token verification'
+        required: false
 
 jobs:
   build:
-    name: Build and Test
-    runs-on: ubuntu-latest
+    name: ${{ inputs.job-name }}
+    runs-on: ${{ inputs.runs-on }}
     permissions:
       contents: read
       id-token: write  # Required for OIDC
@@ -42,12 +55,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK
-        uses: actions/setup-java@v4
+      - name: Setup Gradle
+        uses: redis/github-workflows/.github/actions/setup-gradle@main
         with:
           java-version: ${{ inputs.java-version }}
-          distribution: 'temurin'
-          cache: 'gradle'
+          java-distribution: 'temurin'
 
       - name: Configure AWS credentials
         uses: redis/github-workflows/.github/actions/configure-aws@main
@@ -61,6 +73,8 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build and test
+        env:
+          UNLOCK_PUBLIC_KEY: ${{ secrets.unlock-public-key }}
         run: ./gradlew ${{ inputs.gradle-tasks }}
 
       - name: Upload test results
