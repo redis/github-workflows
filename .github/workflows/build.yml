@@ -87,12 +87,25 @@ jobs:
             **/build/test-results/
           if-no-files-found: ignore
 
-      - name: Publish JUnit test report
+      - name: Detect JUnit XML results
         if: always()
+        id: junit-results
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
+          files=(**/build/test-results/**/*.xml)
+          if [ ${#files[@]} -gt 0 ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish JUnit test report
+        if: always() && steps.junit-results.outputs.found == 'true'
         uses: dorny/test-reporter@v1
         with:
           name: Gradle Test Results (${{ inputs.job-name }})
-          path: '**/build/test-results/test/*.xml'
+          path: '**/build/test-results/**/*.xml'
           reporter: java-junit
           fail-on-error: false
 
@@ -103,6 +116,6 @@ jobs:
           name: build-diagnostics-${{ inputs.job-name }}
           path: |
             **/build/reports/problems/
-            **/build/reports/tests/test/
-            **/build/test-results/test/
+            **/build/reports/tests/
+            **/build/test-results/
           if-no-files-found: ignore
