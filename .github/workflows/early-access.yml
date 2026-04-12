@@ -50,6 +50,9 @@ on:
       docker-password:
         description: 'Docker registry password (for bootBuildImage)'
         required: false
+      unlock-public-key:
+        description: 'Base64-encoded Ed25519 public key for unlock token verification'
+        required: false
 
 jobs:
   early-access:
@@ -74,13 +77,14 @@ jobs:
         id: version
         run: |
           VERSION=$(./gradlew currentVersion -q | grep "Project version:" | awk '{print $3}')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Snapshot version: $VERSION"
 
       - name: Build
         env:
           DOCKER_USERNAME: ${{ secrets.docker-username }}
           DOCKER_PASSWORD: ${{ secrets.docker-password }}
+          UNLOCK_PUBLIC_KEY: ${{ secrets.unlock-public-key }}
         run: ./gradlew ${{ inputs.gradle-build-tasks }} ${{ inputs.skip-tests && '-x test' || '' }}
 
       - name: Set up Docker Buildx

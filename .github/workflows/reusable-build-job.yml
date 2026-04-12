@@ -1,0 +1,122 @@
+name: Gradle Build Job
+
+on:
+  workflow_call:
+    inputs:
+      job-name:
+        description: 'Display name for the job'
+        default: 'Build and Test'
+        required: false
+        type: string
+      java-version:
+        description: 'Java version to use'
+        default: '17'
+        required: false
+        type: string
+      runs-on:
+        description: 'Runner label to use for the job'
+        default: 'ubuntu-latest'
+        required: false
+        type: string
+      gradle-tasks:
+        description: 'Gradle tasks to run'
+        default: 'build'
+        required: false
+        type: string
+      aws-role-arn:
+        description: 'AWS IAM role ARN for OIDC authentication'
+        required: false
+        type: string
+      aws-region:
+        description: 'AWS region (used with aws-role-arn or aws secrets)'
+        default: 'us-east-1'
+        required: false
+        type: string
+    secrets:
+      aws-access-key-id:
+        description: 'AWS access key ID (alternative to OIDC)'
+        required: false
+      aws-secret-access-key:
+        description: 'AWS secret access key (alternative to OIDC)'
+        required: false
+      unlock-public-key:
+        description: 'Base64-encoded Ed25519 public key for unlock token verification'
+        required: false
+
+jobs:
+  build:
+    name: ${{ inputs.job-name }}
+    runs-on: ${{ inputs.runs-on }}
+    permissions:
+      contents: read
+      checks: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Gradle
+        uses: redis/github-workflows/.github/actions/setup-gradle@main
+        with:
+          java-version: ${{ inputs.java-version }}
+          java-distribution: 'temurin'
+
+      - name: Configure AWS credentials
+        uses: redis/github-workflows/.github/actions/configure-aws@main
+        with:
+          aws-role-arn: ${{ inputs.aws-role-arn }}
+          aws-access-key-id: ${{ secrets.aws-access-key-id }}
+          aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build and test
+        env:
+          UNLOCK_PUBLIC_KEY: ${{ secrets.unlock-public-key }}
+        run: ./gradlew ${{ inputs.gradle-tasks }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-${{ inputs.job-name }}
+          path: |
+            **/build/reports/tests/
+            **/build/test-results/
+          if-no-files-found: ignore
+
+      - name: Detect JUnit XML results
+        if: always()
+        id: junit-results
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
+          files=(**/build/test-results/**/*.xml)
+          if [ ${#files[@]} -gt 0 ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish JUnit test report
+        if: always() && steps.junit-results.outputs.found == 'true'
+        uses: dorny/test-reporter@v2.2.0
+        with:
+          name: Gradle Test Results (${{ inputs.job-name }})
+          path: '**/build/test-results/**/*.xml'
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-diagnostics-${{ inputs.job-name }}
+          path: |
+            **/build/reports/problems/
+            **/build/reports/tests/
+            **/build/test-results/
+          if-no-files-found: ignore
