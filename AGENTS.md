@@ -89,6 +89,9 @@ jobs:
 - `slack-webhook`: Release notifications
 - `docker-username`, `docker-password`: Docker Hub publishing
 
+### Optional build secrets
+- `unlock-public-key`: Base64-encoded Ed25519 public key exposed to Gradle as `UNLOCK_PUBLIC_KEY` for token verification during builds
+
 ## Making Changes
 
 1. Changes here affect all consuming repositories
@@ -102,5 +105,4 @@ jobs:
 - [JReleaser Documentation](https://jreleaser.org/guide/latest/)
 - [Axion Release Plugin](https://axion-release-plugin.readthedocs.io/)
 - [Antora Documentation](https://docs.antora.org/)
-
 

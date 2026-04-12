@@ -135,6 +135,9 @@ on:
       aws-secret-access-key:
         description: 'AWS secret access key (for pre-release-script, alternative to OIDC)'
         required: false
+      unlock-public-key:
+        description: 'Base64-encoded Ed25519 public key for unlock token verification'
+        required: false
 
 jobs:
   release:
@@ -171,6 +174,7 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.docker-username }}
           DOCKER_PASSWORD: ${{ secrets.docker-password }}
+          UNLOCK_PUBLIC_KEY: ${{ secrets.unlock-public-key }}
         run: ./gradlew ${{ inputs.gradle-build-tasks }} ${{ inputs.skip-tests && '-x test' || '' }}
 
       - name: Configure AWS credentials
