@@ -25,7 +25,7 @@ on:
         type: string
       skip-tests:
         description: 'Skip tests during build (adds -x test flag to Gradle)'
-        default: false
+        default: true
         required: false
         type: boolean
     secrets:
