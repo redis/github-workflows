@@ -1,8 +1,13 @@
-name: Gradle Build (Simple)
+name: Gradle Build
 
 on:
   workflow_call:
     inputs:
+      split-jobs:
+        description: 'Run the build as separate lint, unit, integration, and package jobs'
+        default: false
+        required: false
+        type: boolean
       job-name:
         description: 'Display name for the job'
         default: 'Build and Test'
@@ -19,8 +24,28 @@ on:
         required: false
         type: string
       gradle-tasks:
-        description: 'Gradle tasks to run'
+        description: 'Gradle tasks to run for the legacy single-job path'
         default: 'build'
+        required: false
+        type: string
+      lint-gradle-tasks:
+        description: 'Gradle tasks to run for lint and static analysis'
+        default: '--parallel spotlessCheck pmdMain checkstyleMain'
+        required: false
+        type: string
+      test-gradle-tasks:
+        description: 'Gradle tasks to run for unit and default test coverage'
+        default: '--parallel test'
+        required: false
+        type: string
+      integration-gradle-tasks:
+        description: 'Gradle tasks to run for slower integration coverage'
+        default: '--parallel integrationTest'
+        required: false
+        type: string
+      package-gradle-tasks:
+        description: 'Gradle tasks to run for packaging and assembly verification'
+        default: '--parallel assemble'
         required: false
         type: string
       aws-role-arn:
@@ -45,77 +70,76 @@ on:
 
 jobs:
   build:
-    name: ${{ inputs.job-name }}
-    runs-on: ${{ inputs.runs-on }}
-    permissions:
-      contents: read
-      id-token: write  # Required for OIDC
+    if: ${{ !inputs.split-jobs }}
+    uses: ./.github/workflows/reusable-build-job.yml
+    with:
+      job-name: ${{ inputs.job-name }}
+      java-version: ${{ inputs.java-version }}
+      runs-on: ${{ inputs.runs-on }}
+      gradle-tasks: ${{ inputs.gradle-tasks }}
+      aws-role-arn: ${{ inputs.aws-role-arn }}
+      aws-region: ${{ inputs.aws-region }}
+    secrets:
+      aws-access-key-id: ${{ secrets.aws-access-key-id }}
+      aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
+      unlock-public-key: ${{ secrets.unlock-public-key }}
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  lint:
+    if: ${{ inputs.split-jobs }}
+    uses: ./.github/workflows/reusable-build-job.yml
+    with:
+      job-name: 'Lint And Static Analysis'
+      java-version: ${{ inputs.java-version }}
+      runs-on: ${{ inputs.runs-on }}
+      gradle-tasks: ${{ inputs.lint-gradle-tasks }}
+      aws-role-arn: ${{ inputs.aws-role-arn }}
+      aws-region: ${{ inputs.aws-region }}
+    secrets:
+      aws-access-key-id: ${{ secrets.aws-access-key-id }}
+      aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
+      unlock-public-key: ${{ secrets.unlock-public-key }}
 
-      - name: Setup Gradle
-        uses: redis/github-workflows/.github/actions/setup-gradle@main
-        with:
-          java-version: ${{ inputs.java-version }}
-          java-distribution: 'temurin'
+  unit-tests:
+    if: ${{ inputs.split-jobs }}
+    uses: ./.github/workflows/reusable-build-job.yml
+    with:
+      job-name: 'Unit And Default Tests'
+      java-version: ${{ inputs.java-version }}
+      runs-on: ${{ inputs.runs-on }}
+      gradle-tasks: ${{ inputs.test-gradle-tasks }}
+      aws-role-arn: ${{ inputs.aws-role-arn }}
+      aws-region: ${{ inputs.aws-region }}
+    secrets:
+      aws-access-key-id: ${{ secrets.aws-access-key-id }}
+      aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
+      unlock-public-key: ${{ secrets.unlock-public-key }}
 
-      - name: Configure AWS credentials
-        uses: redis/github-workflows/.github/actions/configure-aws@main
-        with:
-          aws-role-arn: ${{ inputs.aws-role-arn }}
-          aws-access-key-id: ${{ secrets.aws-access-key-id }}
-          aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
-          aws-region: ${{ inputs.aws-region }}
+  integration-tests:
+    if: ${{ inputs.split-jobs }}
+    uses: ./.github/workflows/reusable-build-job.yml
+    with:
+      job-name: 'Integration Tests'
+      java-version: ${{ inputs.java-version }}
+      runs-on: ${{ inputs.runs-on }}
+      gradle-tasks: ${{ inputs.integration-gradle-tasks }}
+      aws-role-arn: ${{ inputs.aws-role-arn }}
+      aws-region: ${{ inputs.aws-region }}
+    secrets:
+      aws-access-key-id: ${{ secrets.aws-access-key-id }}
+      aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
+      unlock-public-key: ${{ secrets.unlock-public-key }}
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build and test
-        env:
-          UNLOCK_PUBLIC_KEY: ${{ secrets.unlock-public-key }}
-        run: ./gradlew ${{ inputs.gradle-tasks }}
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-${{ inputs.job-name }}
-          path: |
-            **/build/reports/tests/
-            **/build/test-results/
-          if-no-files-found: ignore
-
-      - name: Detect JUnit XML results
-        if: always()
-        id: junit-results
-        shell: bash
-        run: |
-          shopt -s globstar nullglob
-          files=(**/build/test-results/**/*.xml)
-          if [ ${#files[@]} -gt 0 ]; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Publish JUnit test report
-        if: always() && steps.junit-results.outputs.found == 'true'
-        uses: dorny/test-reporter@v1
-        with:
-          name: Gradle Test Results (${{ inputs.job-name }})
-          path: '**/build/test-results/**/*.xml'
-          reporter: java-junit
-          fail-on-error: false
-
-      - name: Upload build diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-diagnostics-${{ inputs.job-name }}
-          path: |
-            **/build/reports/problems/
-            **/build/reports/tests/
-            **/build/test-results/
-          if-no-files-found: ignore
+  package-verification:
+    if: ${{ inputs.split-jobs }}
+    uses: ./.github/workflows/reusable-build-job.yml
+    with:
+      job-name: 'Package Verification'
+      java-version: ${{ inputs.java-version }}
+      runs-on: ${{ inputs.runs-on }}
+      gradle-tasks: ${{ inputs.package-gradle-tasks }}
+      aws-role-arn: ${{ inputs.aws-role-arn }}
+      aws-region: ${{ inputs.aws-region }}
+    secrets:
+      aws-access-key-id: ${{ secrets.aws-access-key-id }}
+      aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
+      unlock-public-key: ${{ secrets.unlock-public-key }}
