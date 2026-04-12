@@ -193,7 +193,7 @@ jobs:
         run: ${{ inputs.pre-release-script }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: JReleaser Pre-Release
         if: inputs.jreleaser-arguments != ''
