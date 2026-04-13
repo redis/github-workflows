@@ -175,7 +175,7 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.docker-username }}
           DOCKER_PASSWORD: ${{ secrets.docker-password }}
           UNLOCK_PUBLIC_KEY: ${{ secrets.unlock-public-key }}
-        run: ./gradlew ${{ inputs.gradle-build-tasks }} ${{ inputs.skip-tests && '-x test' || '' }}
+        run: ./gradlew ${{ inputs.gradle-build-tasks }} ${{ inputs.skip-tests && '-x test -x integrationTest' || '' }}
 
       - name: Configure AWS credentials
         if: inputs.pre-release-script != ''
