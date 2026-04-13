@@ -119,4 +119,6 @@ jobs:
             **/build/reports/problems/
             **/build/reports/tests/
             **/build/test-results/
+            **/build/reports/checkstyle/
+            **/build/reports/pmd/
           if-no-files-found: ignore
