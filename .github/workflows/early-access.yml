@@ -8,8 +8,13 @@ on:
         default: '17'
         required: false
         type: string
+      gradle-artifact-tasks:
+        description: 'Gradle tasks that assemble the artifacts JReleaser will publish. Prefer this over gradle-build-tasks.'
+        default: ''
+        required: false
+        type: string
       gradle-build-tasks:
-        description: 'Gradle tasks to run before JReleaser (e.g., "build :app:bootJar :app:distTar :app:distZip")'
+        description: 'Deprecated: Gradle tasks to run before JReleaser. Prefer gradle-artifact-tasks.'
         default: 'build'
         required: false
         type: string
@@ -80,12 +85,21 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Snapshot version: $VERSION"
 
-      - name: Build
+      - name: Resolve Gradle Tasks
+        id: gradle-tasks
+        run: |
+          if [ -n "${{ inputs.gradle-artifact-tasks }}" ]; then
+            echo "tasks=${{ inputs.gradle-artifact-tasks }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tasks=${{ inputs.gradle-build-tasks }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Assemble Artifacts
         env:
           DOCKER_USERNAME: ${{ secrets.docker-username }}
           DOCKER_PASSWORD: ${{ secrets.docker-password }}
           UNLOCK_PUBLIC_KEY: ${{ secrets.unlock-public-key }}
-        run: ./gradlew ${{ inputs.gradle-build-tasks }} ${{ inputs.skip-tests && '-x test' || '' }}
+        run: ./gradlew ${{ steps.gradle-tasks.outputs.tasks }} ${{ inputs.skip-tests && '-x test -x integrationTest' || '' }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
