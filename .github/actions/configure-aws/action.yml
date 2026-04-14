@@ -45,7 +45,7 @@ runs:
 
     - name: Configure AWS credentials (OIDC)
       if: steps.check.outputs.method == 'oidc'
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v5.1.1
       with:
         role-to-assume: ${{ inputs.aws-role-arn }}
         role-session-name: ${{ inputs.role-session-name }}
@@ -53,9 +53,8 @@ runs:
 
     - name: Configure AWS credentials (Static)
       if: steps.check.outputs.method == 'static'
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v5.1.1
       with:
         aws-access-key-id: ${{ inputs.aws-access-key-id }}
         aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
         aws-region: ${{ inputs.aws-region }}
-
