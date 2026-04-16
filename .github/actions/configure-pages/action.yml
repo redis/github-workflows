@@ -1,0 +1,8 @@
+name: 'Configure Pages'
+description: 'Wrapper around actions/configure-pages to centralize the pinned version'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Configure Pages
+      uses: actions/configure-pages@v5

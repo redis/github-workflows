@@ -1,0 +1,15 @@
+name: 'Upload Pages Artifact'
+description: 'Wrapper around actions/upload-pages-artifact to centralize the pinned version'
+
+inputs:
+  path:
+    description: 'Directory containing the static site to upload.'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v4
+      with:
+        path: ${{ inputs.path }}

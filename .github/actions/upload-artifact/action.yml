@@ -1,0 +1,24 @@
+name: 'Upload Artifact'
+description: 'Wrapper around actions/upload-artifact to centralize the pinned version'
+
+inputs:
+  name:
+    description: 'Artifact name.'
+    required: true
+  path:
+    description: 'A file, directory, or glob pattern that describes what to upload.'
+    required: true
+  if-no-files-found:
+    description: 'Behavior when no files are found.'
+    required: false
+    default: 'warn'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Upload artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.name }}
+        path: ${{ inputs.path }}
+        if-no-files-found: ${{ inputs.if-no-files-found }}

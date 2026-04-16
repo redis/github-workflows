@@ -68,7 +68,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: redis/github-workflows/.github/actions/checkout@main
         with:
           fetch-depth: 0
           token: ${{ secrets.git-access-token }}
@@ -102,7 +102,7 @@ jobs:
         run: ./gradlew ${{ steps.gradle-tasks.outputs.tasks }} ${{ inputs.skip-tests && '-x test -x integrationTest' || '' }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: redis/github-workflows/.github/actions/setup-buildx@main
 
       - name: Release with JReleaser
         uses: redis/github-workflows/.github/actions/jreleaser@main
