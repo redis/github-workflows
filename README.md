@@ -91,21 +91,41 @@ testing {
 
             dependencies {
                 implementation project()
+                // Additional suites do not inherit testImplementation/testRuntimeOnly.
+                // Add the libraries your integration tests actually use here.
+                implementation 'org.assertj:assertj-core'
+                implementation 'org.testcontainers:junit-jupiter'
+                implementation 'org.testcontainers:testcontainers'
+                runtimeOnly 'org.junit.platform:junit-platform-launcher'
             }
 
             targets {
                 all {
                     testTask.configure {
                         shouldRunAfter(test)
+                        systemProperty 'io.lettuce.core.epoll', 'false'
+                        systemProperty 'io.lettuce.core.kqueue', 'false'
+                        systemProperty 'io.lettuce.core.iouring', 'false'
                     }
                 }
             }
         }
     }
 }
+
+tasks.named('check') {
+    dependsOn tasks.named('integrationTest')
+}
 ```
 
-If the project already configures the default `test` task, keep that configuration and apply the same test JVM settings to the new suite. For example:
+What this caller-side change does:
+
+- creates the `integrationTest` task and the `src/integrationTest/java` source set
+- gives the new suite its own dependencies instead of reusing `testImplementation`
+- keeps unit tests in `test` and slower coverage in `integrationTest`
+- includes `integrationTest` in `check` and therefore in `build`
+
+If the project already configures the default `test` task, keep that configuration and make sure the same JVM settings are applied to `integrationTest`. One way is to configure every `Test` task:
 
 ```groovy
 tasks.withType(Test).configureEach {
