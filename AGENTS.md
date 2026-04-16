@@ -10,6 +10,8 @@ uses: redis/github-workflows/.github/workflows/release.yml@main
 uses: redis/github-workflows/.github/actions/jreleaser@main
 ```
 
+Consumer-facing usage examples and Gradle test suite guidance live in `README.md`.
+
 ## Repository Structure
 
 ```
@@ -105,4 +107,3 @@ jobs:
 - [JReleaser Documentation](https://jreleaser.org/guide/latest/)
 - [Axion Release Plugin](https://axion-release-plugin.readthedocs.io/)
 - [Antora Documentation](https://docs.antora.org/)
-

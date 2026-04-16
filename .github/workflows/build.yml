@@ -29,22 +29,22 @@ on:
         required: false
         type: string
       lint-gradle-tasks:
-        description: 'Gradle tasks to run for lint and static analysis'
+        description: 'Gradle tasks to run for lint and static analysis. Set to an empty string to disable this job when split-jobs is enabled.'
         default: '--parallel spotlessCheck pmdMain checkstyleMain'
         required: false
         type: string
       test-gradle-tasks:
-        description: 'Gradle tasks to run for unit and default test coverage'
+        description: 'Gradle tasks to run for the default JVM test suite, typically `test`. Set to an empty string to disable this job when split-jobs is enabled.'
         default: '--parallel test'
         required: false
         type: string
       integration-gradle-tasks:
-        description: 'Gradle tasks to run for slower integration coverage'
+        description: 'Gradle tasks to run for additional JVM test suites, typically `integrationTest` from Gradle testing suites. Set to an empty string to disable this job when split-jobs is enabled.'
         default: '--parallel integrationTest'
         required: false
         type: string
       package-gradle-tasks:
-        description: 'Gradle tasks to run for packaging and assembly verification'
+        description: 'Gradle tasks to run for packaging and assembly verification. Set to an empty string to disable this job when split-jobs is enabled.'
         default: '--parallel assemble'
         required: false
         type: string
@@ -85,7 +85,7 @@ jobs:
       unlock-public-key: ${{ secrets.unlock-public-key }}
 
   lint:
-    if: ${{ inputs.split-jobs }}
+    if: ${{ inputs.split-jobs && inputs.lint-gradle-tasks != '' }}
     uses: ./.github/workflows/reusable-build-job.yml
     with:
       job-name: 'Lint And Static Analysis'
@@ -100,10 +100,10 @@ jobs:
       unlock-public-key: ${{ secrets.unlock-public-key }}
 
   unit-tests:
-    if: ${{ inputs.split-jobs }}
+    if: ${{ inputs.split-jobs && inputs.test-gradle-tasks != '' }}
     uses: ./.github/workflows/reusable-build-job.yml
     with:
-      job-name: 'Unit And Default Tests'
+      job-name: 'Unit Tests'
       java-version: ${{ inputs.java-version }}
       runs-on: ${{ inputs.runs-on }}
       gradle-tasks: ${{ inputs.test-gradle-tasks }}
@@ -115,7 +115,7 @@ jobs:
       unlock-public-key: ${{ secrets.unlock-public-key }}
 
   integration-tests:
-    if: ${{ inputs.split-jobs }}
+    if: ${{ inputs.split-jobs && inputs.integration-gradle-tasks != '' }}
     uses: ./.github/workflows/reusable-build-job.yml
     with:
       job-name: 'Integration Tests'
@@ -130,7 +130,7 @@ jobs:
       unlock-public-key: ${{ secrets.unlock-public-key }}
 
   package-verification:
-    if: ${{ inputs.split-jobs }}
+    if: ${{ inputs.split-jobs && inputs.package-gradle-tasks != '' }}
     uses: ./.github/workflows/reusable-build-job.yml
     with:
       job-name: 'Package Verification'
