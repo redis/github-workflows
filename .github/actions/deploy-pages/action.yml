@@ -1,0 +1,14 @@
+name: 'Deploy Pages'
+description: 'Wrapper around actions/deploy-pages to centralize the pinned version'
+
+outputs:
+  page_url:
+    description: 'Published Pages URL.'
+    value: ${{ steps.deploy.outputs.page_url }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Deploy to GitHub Pages
+      id: deploy
+      uses: actions/deploy-pages@v4

@@ -1,0 +1,8 @@
+name: 'Setup Buildx'
+description: 'Wrapper around docker/setup-buildx-action to centralize the pinned version'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
