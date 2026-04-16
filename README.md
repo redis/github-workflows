@@ -71,9 +71,15 @@ Additional suite:
 - `src/integrationTest/java`
 - task: `integrationTest`
 
-Example Gradle configuration:
+In the caller repository, update `build.gradle` or `build.gradle.kts` so Gradle actually defines the extra suite before enabling `integration-gradle-tasks`.
+
+Typical caller-side `build.gradle` change:
 
 ```groovy
+plugins {
+    id 'java-library'
+}
+
 testing {
     suites {
         test {
@@ -99,21 +105,38 @@ testing {
 }
 ```
 
-This layout maps cleanly to the reusable workflow:
+If the project already configures the default `test` task, keep that configuration and apply the same test JVM settings to the new suite. For example:
+
+```groovy
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    systemProperty 'io.lettuce.core.epoll', 'false'
+    systemProperty 'io.lettuce.core.kqueue', 'false'
+    systemProperty 'io.lettuce.core.iouring', 'false'
+}
+```
+
+Move tests in the caller repository like this:
+
+- keep fast, isolated tests in `src/test/java`
+- move Docker, Testcontainers, network, and cross-process tests to `src/integrationTest/java`
+- add any integration-only fixtures under `src/integrationTest/resources`
+
+Once the caller Gradle build defines `integrationTest`, map the workflow inputs like this:
 
 - `test-gradle-tasks: --parallel test`
 - `integration-gradle-tasks: --parallel integrationTest`
 
 ## Migration Guidance For Consuming Repositories
 
-1. Keep fast unit tests in `src/test`.
-2. Move slower Docker, Testcontainers, network, or cross-process coverage into `src/integrationTest`.
-3. Define an `integrationTest` JVM test suite in Gradle.
-4. Enable `split-jobs: true` in the consuming workflow.
+1. Update the caller repo's `build.gradle` to define an `integrationTest(JvmTestSuite)`.
+2. Move slower tests from `src/test` to `src/integrationTest`.
+3. Keep any shared `Test` task configuration applied to both `test` and `integrationTest`.
+4. Enable `split-jobs: true` in the caller workflow.
 5. Wire `test-gradle-tasks` to `test` and `integration-gradle-tasks` to `integrationTest`.
-6. If the project does not yet have a separate integration suite, set `integration-gradle-tasks: ''` to skip that job until the Gradle layout is updated.
+6. If the caller repo does not yet have a separate integration suite, set `integration-gradle-tasks: ''` until the Gradle layout is updated.
 
 ## Notes
 
-- The reusable workflow does not create `integrationTest` automatically. The consumer repository must define the suite in Gradle.
+- The reusable workflow does not create `integrationTest` automatically. The caller repository must define the suite in Gradle.
 - Do not use `check` as the lint bucket unless you want tests to run there too.
