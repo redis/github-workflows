@@ -20,7 +20,7 @@ runs:
   using: 'composite'
   steps:
     - name: Publish test report
-      uses: dorny/test-reporter@v2.2.0
+      uses: dorny/test-reporter@v3.0.0
       with:
         name: ${{ inputs.name }}
         path: ${{ inputs.path }}
