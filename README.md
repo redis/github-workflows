@@ -69,6 +69,8 @@ When a coverage path is configured for a split test job, the reusable workflow w
 
 This is intended for repositories that already generate coverage as part of an existing test job and want to avoid a separate coverage-only workflow job that reruns tests.
 
+For Java 25 projects, configure JaCoCo in the caller repository with `toolVersion = '0.8.14'` or newer before enabling coverage publishing. This reusable workflow only consumes the generated reports and does not manage the caller's JaCoCo agent version.
+
 ## Recommended Gradle Test Layout
 
 For Gradle projects, prefer the built-in JVM test suites API instead of keeping integration coverage inside `src/test`.
