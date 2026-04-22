@@ -19,6 +19,7 @@ Inputs:
 - `unit-coverage-results-path`: optional JaCoCo XML report glob to publish from the unit test job
 - `integration-coverage-results-path`: optional JaCoCo XML report glob to publish from the integration test job
 - `coverage-artifact-prefix`: optional prefix for uploaded coverage artifacts when coverage publishing is enabled
+- `jacoco-version`: optional JaCoCo tool version to apply during Gradle builds, useful for newer Java toolchains such as Java 25
 
 When `split-jobs` is enabled, any split stage can be disabled by passing an empty string.
 
@@ -58,6 +59,7 @@ jobs:
       test-gradle-tasks: ${{ inputs.test-gradle-tasks || '--parallel test' }}
       integration-gradle-tasks: ${{ inputs.integration-gradle-tasks || '--parallel integrationTest' }}
       package-gradle-tasks: '--parallel assemble'
+      jacoco-version: '0.8.14'
       unit-coverage-results-path: ''
       integration-coverage-results-path: 'build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml'
 ```
@@ -66,10 +68,9 @@ When a coverage path is configured for a split test job, the reusable workflow w
 
 - publish a JaCoCo summary in the job output
 - upload the matching XML plus any adjacent JaCoCo HTML report as an artifact
+- apply `jacoco-version` through a Gradle init script when the input is set
 
 This is intended for repositories that already generate coverage as part of an existing test job and want to avoid a separate coverage-only workflow job that reruns tests.
-
-For Java 25 projects, configure JaCoCo in the caller repository with `toolVersion = '0.8.14'` or newer before enabling coverage publishing. This reusable workflow only consumes the generated reports and does not manage the caller's JaCoCo agent version.
 
 ## Recommended Gradle Test Layout
 
