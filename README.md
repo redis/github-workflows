@@ -16,6 +16,9 @@ Inputs:
 - `test-gradle-tasks`: task list for the default JVM test suite, typically `test`
 - `integration-gradle-tasks`: task list for additional JVM test suites, typically `integrationTest`
 - `package-gradle-tasks`: task list for packaging and assembly verification
+- `unit-coverage-results-path`: optional JaCoCo XML report glob to publish from the unit test job
+- `integration-coverage-results-path`: optional JaCoCo XML report glob to publish from the integration test job
+- `coverage-artifact-prefix`: optional prefix for uploaded coverage artifacts when coverage publishing is enabled
 
 When `split-jobs` is enabled, any split stage can be disabled by passing an empty string.
 
@@ -55,7 +58,16 @@ jobs:
       test-gradle-tasks: ${{ inputs.test-gradle-tasks || '--parallel test' }}
       integration-gradle-tasks: ${{ inputs.integration-gradle-tasks || '--parallel integrationTest' }}
       package-gradle-tasks: '--parallel assemble'
+      unit-coverage-results-path: ''
+      integration-coverage-results-path: 'build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml'
 ```
+
+When a coverage path is configured for a split test job, the reusable workflow will:
+
+- publish a JaCoCo summary in the job output
+- upload the matching XML plus any adjacent JaCoCo HTML report as an artifact
+
+This is intended for repositories that already generate coverage as part of an existing test job and want to avoid a separate coverage-only workflow job that reruns tests.
 
 ## Recommended Gradle Test Layout
 
