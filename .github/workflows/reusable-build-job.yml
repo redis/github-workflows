@@ -23,11 +23,6 @@ on:
         default: 'build'
         required: false
         type: string
-      jacoco-version:
-        description: 'Optional JaCoCo tool version to apply during the Gradle build'
-        default: ''
-        required: false
-        type: string
       coverage-results-path:
         description: 'Optional JaCoCo XML report glob to publish from this job'
         default: ''
@@ -92,21 +87,6 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-
-      - name: Override JaCoCo version
-        if: inputs.jacoco-version != ''
-        shell: bash
-        run: |
-          mkdir -p "$HOME/.gradle/init.d"
-          cat <<EOF > "$HOME/.gradle/init.d/jacoco-version.gradle"
-          allprojects {
-              plugins.withId('jacoco') {
-                  jacoco {
-                      toolVersion = '${{ inputs.jacoco-version }}'
-                  }
-              }
-          }
-          EOF
 
       - name: Build and test
         env:
