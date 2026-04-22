@@ -43,17 +43,19 @@ runs:
         GITHUB_TOKEN: ${{ inputs.git-access-token }}
         TAG_PREFIX: ${{ inputs.tag-prefix }}
       run: |
+        AXION_GIT_AUTH=(-Prelease.customUsername="$GITHUB_TOKEN" -Prelease.customPassword="")
+
         if [ -n "${{ inputs.version }}" ]; then
-          ./gradlew release -Prelease.version=${{ inputs.version }} -Prelease.tagPrefix="${TAG_PREFIX}" -Prelease.disableChecks
+          ./gradlew release "${AXION_GIT_AUTH[@]}" -Prelease.version=${{ inputs.version }} -Prelease.tagPrefix="${TAG_PREFIX}" -Prelease.disableChecks
         else
           # Capitalize first letter of version-increment (patch -> Patch, minor -> Minor, major -> Major)
           INCREMENT="${{ inputs.version-increment }}"
           INCREMENT_CAPITALIZED="$(tr '[:lower:]' '[:upper:]' <<< ${INCREMENT:0:1})${INCREMENT:1}"
-          ./gradlew release -Prelease.versionIncrementer=increment${INCREMENT_CAPITALIZED} -Prelease.tagPrefix="${TAG_PREFIX}" -Prelease.disableChecks
+          ./gradlew release "${AXION_GIT_AUTH[@]}" -Prelease.versionIncrementer=increment${INCREMENT_CAPITALIZED} -Prelease.tagPrefix="${TAG_PREFIX}" -Prelease.disableChecks
         fi
 
         # Get the version that was just tagged
-        VERSION=$(./gradlew currentVersion -q | grep "Project version:" | cut -d' ' -f3)
+        VERSION=$(./gradlew currentVersion "${AXION_GIT_AUTH[@]}" -q | grep "Project version:" | cut -d' ' -f3)
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Released version: $VERSION"
 
