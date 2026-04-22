@@ -140,11 +140,54 @@ jobs:
 
       - name: Publish coverage summary
         if: always() && inputs.coverage-results-path != '' && steps.coverage-results.outputs.found == 'true'
-        uses: PavanMudigonda/jacoco-reporter@v5.0
-        with:
-          coverage_results_path: ${{ inputs.coverage-results-path }}
-          coverage_report_name: ${{ inputs.coverage-report-name }}
-          publish_only_summary: true
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
+          files=(${{ inputs.coverage-results-path }})
+          if [ ${#files[@]} -eq 0 ]; then
+            exit 0
+          fi
+          printf '%s\n' "${files[@]}" > coverage-files.txt
+          python3 - <<'PY'
+          import os
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          files = [
+              Path(line.strip())
+              for line in Path("coverage-files.txt").read_text(encoding="utf-8").splitlines()
+              if line.strip()
+          ]
+          counters = {}
+          for file in files:
+              root = ET.parse(file).getroot()
+              for counter in root.findall("counter"):
+                  counter_type = counter.attrib["type"]
+                  missed = int(counter.attrib["missed"])
+                  covered = int(counter.attrib["covered"])
+                  existing = counters.get(counter_type, (0, 0))
+                  counters[counter_type] = (existing[0] + missed, existing[1] + covered)
+
+          def pct(counter_type):
+              missed, covered = counters.get(counter_type, (0, 0))
+              total = missed + covered
+              return "n/a" if total == 0 else f"{covered / total * 100:.2f}%"
+
+          summary = "\n".join([
+              f"## {os.environ['COVERAGE_REPORT_NAME']}",
+              "",
+              "| Metric | Coverage |",
+              "| --- | ---: |",
+              f"| Instructions | {pct('INSTRUCTION')} |",
+              f"| Lines | {pct('LINE')} |",
+              f"| Branches | {pct('BRANCH')} |",
+          ])
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as fh:
+              fh.write(summary + "\n")
+          PY
+        env:
+          COVERAGE_REPORT_NAME: ${{ inputs.coverage-report-name }}
 
       - name: Upload coverage reports
         if: always() && inputs.coverage-results-path != '' && inputs.coverage-artifact-name != ''
