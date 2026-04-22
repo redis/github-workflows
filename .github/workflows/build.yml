@@ -48,6 +48,26 @@ on:
         default: '--parallel assemble'
         required: false
         type: string
+      unit-coverage-results-path:
+        description: 'Optional JaCoCo XML report glob to publish from the unit test job'
+        default: ''
+        required: false
+        type: string
+      integration-coverage-results-path:
+        description: 'Optional JaCoCo XML report glob to publish from the integration test job'
+        default: ''
+        required: false
+        type: string
+      coverage-artifact-prefix:
+        description: 'Optional prefix for uploaded coverage artifacts from split test jobs'
+        default: 'coverage-report'
+        required: false
+        type: string
+      jacoco-version:
+        description: 'Optional JaCoCo tool version to apply during Gradle builds that generate coverage reports'
+        default: ''
+        required: false
+        type: string
       aws-role-arn:
         description: 'AWS IAM role ARN for OIDC authentication (for integration tests)'
         required: false
@@ -77,6 +97,7 @@ jobs:
       java-version: ${{ inputs.java-version }}
       runs-on: ${{ inputs.runs-on }}
       gradle-tasks: ${{ inputs.gradle-tasks }}
+      jacoco-version: ${{ inputs.jacoco-version }}
       aws-role-arn: ${{ inputs.aws-role-arn }}
       aws-region: ${{ inputs.aws-region }}
     secrets:
@@ -92,6 +113,7 @@ jobs:
       java-version: ${{ inputs.java-version }}
       runs-on: ${{ inputs.runs-on }}
       gradle-tasks: ${{ inputs.lint-gradle-tasks }}
+      jacoco-version: ${{ inputs.jacoco-version }}
       aws-role-arn: ${{ inputs.aws-role-arn }}
       aws-region: ${{ inputs.aws-region }}
     secrets:
@@ -107,6 +129,10 @@ jobs:
       java-version: ${{ inputs.java-version }}
       runs-on: ${{ inputs.runs-on }}
       gradle-tasks: ${{ inputs.test-gradle-tasks }}
+      jacoco-version: ${{ inputs.jacoco-version }}
+      coverage-results-path: ${{ inputs.unit-coverage-results-path }}
+      coverage-report-name: 'Unit Test Coverage'
+      coverage-artifact-name: ${{ inputs.unit-coverage-results-path != '' && format('{0}-unit-tests', inputs.coverage-artifact-prefix) || '' }}
       aws-role-arn: ${{ inputs.aws-role-arn }}
       aws-region: ${{ inputs.aws-region }}
     secrets:
@@ -122,6 +148,10 @@ jobs:
       java-version: ${{ inputs.java-version }}
       runs-on: ${{ inputs.runs-on }}
       gradle-tasks: ${{ inputs.integration-gradle-tasks }}
+      jacoco-version: ${{ inputs.jacoco-version }}
+      coverage-results-path: ${{ inputs.integration-coverage-results-path }}
+      coverage-report-name: 'Integration Test Coverage'
+      coverage-artifact-name: ${{ inputs.integration-coverage-results-path != '' && format('{0}-integration-tests', inputs.coverage-artifact-prefix) || '' }}
       aws-role-arn: ${{ inputs.aws-role-arn }}
       aws-region: ${{ inputs.aws-region }}
     secrets:
@@ -137,6 +167,7 @@ jobs:
       java-version: ${{ inputs.java-version }}
       runs-on: ${{ inputs.runs-on }}
       gradle-tasks: ${{ inputs.package-gradle-tasks }}
+      jacoco-version: ${{ inputs.jacoco-version }}
       aws-role-arn: ${{ inputs.aws-role-arn }}
       aws-region: ${{ inputs.aws-region }}
     secrets:
