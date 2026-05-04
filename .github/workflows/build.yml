@@ -28,6 +28,11 @@ on:
         default: 'build'
         required: false
         type: string
+      coverage-results-path:
+        description: 'Optional JaCoCo XML report glob to publish from the legacy single-job path'
+        default: ''
+        required: false
+        type: string
       lint-gradle-tasks:
         description: 'Gradle tasks to run for lint and static analysis. Set to an empty string to disable this job when split-jobs is enabled.'
         default: '--parallel spotlessCheck pmdMain checkstyleMain'
@@ -63,6 +68,41 @@ on:
         default: 'coverage-report'
         required: false
         type: string
+      sonar-gradle-tasks:
+        description: 'Optional SonarQube Cloud Gradle tasks appended to the legacy single-job build invocation when sonar-token is provided'
+        default: ''
+        required: false
+        type: string
+      sonar-project-key:
+        description: 'Optional SonarQube Cloud project key'
+        default: ''
+        required: false
+        type: string
+      sonar-organization:
+        description: 'Optional SonarQube Cloud organization key'
+        default: ''
+        required: false
+        type: string
+      sonar-host-url:
+        description: 'SonarQube Cloud host URL'
+        default: 'https://sonarcloud.io'
+        required: false
+        type: string
+      sonar-region:
+        description: 'Optional SonarQube Cloud region'
+        default: ''
+        required: false
+        type: string
+      sonar-quality-gate-wait:
+        description: 'Optional value for sonar.qualitygate.wait'
+        default: ''
+        required: false
+        type: string
+      sonar-coverage-report-paths:
+        description: 'Optional comma-separated JaCoCo XML report paths for SonarQube Cloud'
+        default: ''
+        required: false
+        type: string
       aws-role-arn:
         description: 'AWS IAM role ARN for OIDC authentication (for integration tests)'
         required: false
@@ -82,6 +122,9 @@ on:
       unlock-public-key:
         description: 'Base64-encoded Ed25519 public key for unlock token verification'
         required: false
+      sonar-token:
+        description: 'SonarQube Cloud analysis token'
+        required: false
 
 jobs:
   build:
@@ -92,12 +135,23 @@ jobs:
       java-version: ${{ inputs.java-version }}
       runs-on: ${{ inputs.runs-on }}
       gradle-tasks: ${{ inputs.gradle-tasks }}
+      coverage-results-path: ${{ inputs.coverage-results-path }}
+      coverage-report-name: 'Coverage'
+      coverage-artifact-name: ${{ inputs.coverage-results-path != '' && format('{0}-all-tests', inputs.coverage-artifact-prefix) || '' }}
+      sonar-gradle-tasks: ${{ inputs.sonar-gradle-tasks }}
+      sonar-project-key: ${{ inputs.sonar-project-key }}
+      sonar-organization: ${{ inputs.sonar-organization }}
+      sonar-host-url: ${{ inputs.sonar-host-url }}
+      sonar-region: ${{ inputs.sonar-region }}
+      sonar-quality-gate-wait: ${{ inputs.sonar-quality-gate-wait }}
+      sonar-coverage-report-paths: ${{ inputs.sonar-coverage-report-paths }}
       aws-role-arn: ${{ inputs.aws-role-arn }}
       aws-region: ${{ inputs.aws-region }}
     secrets:
       aws-access-key-id: ${{ secrets.aws-access-key-id }}
       aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
       unlock-public-key: ${{ secrets.unlock-public-key }}
+      sonar-token: ${{ secrets.sonar-token }}
 
   lint:
     if: ${{ inputs.split-jobs && inputs.lint-gradle-tasks != '' }}

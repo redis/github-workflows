@@ -38,6 +38,41 @@ on:
         default: ''
         required: false
         type: string
+      sonar-gradle-tasks:
+        description: 'Optional SonarQube Cloud Gradle tasks to append to the build invocation when sonar-token is provided'
+        default: ''
+        required: false
+        type: string
+      sonar-project-key:
+        description: 'Optional SonarQube Cloud project key'
+        default: ''
+        required: false
+        type: string
+      sonar-organization:
+        description: 'Optional SonarQube Cloud organization key'
+        default: ''
+        required: false
+        type: string
+      sonar-host-url:
+        description: 'SonarQube Cloud host URL'
+        default: 'https://sonarcloud.io'
+        required: false
+        type: string
+      sonar-region:
+        description: 'Optional SonarQube Cloud region'
+        default: ''
+        required: false
+        type: string
+      sonar-quality-gate-wait:
+        description: 'Optional value for sonar.qualitygate.wait'
+        default: ''
+        required: false
+        type: string
+      sonar-coverage-report-paths:
+        description: 'Optional comma-separated JaCoCo XML report paths for SonarQube Cloud'
+        default: ''
+        required: false
+        type: string
       aws-role-arn:
         description: 'AWS IAM role ARN for OIDC authentication'
         required: false
@@ -56,6 +91,9 @@ on:
         required: false
       unlock-public-key:
         description: 'Base64-encoded Ed25519 public key for unlock token verification'
+        required: false
+      sonar-token:
+        description: 'SonarQube Cloud analysis token'
         required: false
 
 jobs:
@@ -88,10 +126,31 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build and test
+      - name: Build, test, and analyze
         env:
+          GRADLE_TASKS: ${{ inputs.gradle-tasks }}
+          SONAR_GRADLE_TASKS: ${{ inputs.sonar-gradle-tasks }}
           UNLOCK_PUBLIC_KEY: ${{ secrets.unlock-public-key }}
-        run: ./gradlew ${{ inputs.gradle-tasks }}
+          SONAR_TOKEN: ${{ secrets.sonar-token }}
+          SONAR_PROJECT_KEY: ${{ inputs.sonar-project-key }}
+          SONAR_ORGANIZATION: ${{ inputs.sonar-organization }}
+          SONAR_HOST_URL: ${{ inputs.sonar-host-url }}
+          SONAR_REGION: ${{ inputs.sonar-region }}
+          SONAR_QUALITY_GATE_WAIT: ${{ inputs.sonar-quality-gate-wait }}
+          SONAR_COVERAGE_REPORT_PATHS: ${{ inputs.sonar-coverage-report-paths }}
+        shell: bash
+        run: |
+          read -r -a gradle_args <<< "$GRADLE_TASKS"
+          read -r -a sonar_gradle_args <<< "$SONAR_GRADLE_TASKS"
+
+          if [[ -n "$SONAR_GRADLE_TASKS" && -n "$SONAR_TOKEN" ]]; then
+            ./gradlew "${gradle_args[@]}" "${sonar_gradle_args[@]}"
+          else
+            if [[ -n "$SONAR_GRADLE_TASKS" ]]; then
+              echo "::notice::Skipping SonarQube Cloud analysis because sonar-token was not provided."
+            fi
+            ./gradlew "${gradle_args[@]}"
+          fi
 
       - name: Upload test results
         if: always()
