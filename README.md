@@ -12,6 +12,7 @@ Inputs:
 
 - `split-jobs`: run separate lint, unit test, integration test, and package jobs
 - `gradle-tasks`: legacy single-job task list
+- `coverage-results-path`: optional JaCoCo XML report glob to publish from the legacy single-job path
 - `lint-gradle-tasks`: task list for lint and static analysis
 - `test-gradle-tasks`: task list for the default JVM test suite, typically `test`
 - `integration-gradle-tasks`: task list for additional JVM test suites, typically `integrationTest`
@@ -19,6 +20,13 @@ Inputs:
 - `unit-coverage-results-path`: optional JaCoCo XML report glob to publish from the unit test job
 - `integration-coverage-results-path`: optional JaCoCo XML report glob to publish from the integration test job
 - `coverage-artifact-prefix`: optional prefix for uploaded coverage artifacts when coverage publishing is enabled
+- `sonar-gradle-tasks`: optional SonarQube Cloud Gradle task list appended to `gradle-tasks` in the legacy single-job path when the `sonar-token` secret is provided
+- `sonar-project-key`: optional SonarQube Cloud project key
+- `sonar-organization`: optional SonarQube Cloud organization key
+- `sonar-host-url`: SonarQube Cloud host URL, defaulting to `https://sonarcloud.io`
+- `sonar-region`: optional SonarQube Cloud region
+- `sonar-quality-gate-wait`: optional value for `sonar.qualitygate.wait`
+- `sonar-coverage-report-paths`: optional comma-separated JaCoCo XML report paths passed to the scanner
 
 When `split-jobs` is enabled, any split stage can be disabled by passing an empty string.
 
@@ -68,6 +76,31 @@ When a coverage path is configured for a split test job, the reusable workflow w
 - upload the matching XML plus any adjacent JaCoCo HTML report as an artifact
 
 This is intended for repositories that already generate coverage as part of an existing test job and want to avoid a separate coverage-only workflow job that reruns tests.
+
+## SonarQube Cloud
+
+For SonarQube Cloud, prefer the legacy single-job path so the Gradle scanner runs in the same workspace and invocation as compilation, tests, and coverage generation. This follows SonarSource's recommended Gradle pattern and avoids a second test run solely for analysis.
+
+Example:
+
+```yaml
+jobs:
+  build:
+    uses: redis/github-workflows/.github/workflows/build.yml@main
+    with:
+      split-jobs: false
+      java-version: '17'
+      gradle-tasks: --parallel test jacocoTestReport integrationTest jacocoIntegrationTestReport assemble
+      sonar-gradle-tasks: sonar
+      coverage-results-path: |
+        **/build/reports/jacoco/test/jacocoTestReport.xml
+        **/build/reports/jacoco/jacocoIntegrationTestReport/jacocoIntegrationTestReport.xml
+      sonar-coverage-report-paths: '**/build/reports/jacoco/test/jacocoTestReport.xml,**/build/reports/jacoco/jacocoIntegrationTestReport/jacocoIntegrationTestReport.xml'
+    secrets:
+      sonar-token: ${{ secrets.SONAR_TOKEN }}
+```
+
+If `sonar-gradle-tasks` is set but `sonar-token` is not provided, the workflow emits a notice and runs only `gradle-tasks`.
 
 ## Recommended Gradle Test Layout
 
