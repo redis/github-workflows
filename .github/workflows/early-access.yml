@@ -116,3 +116,4 @@ jobs:
           docker-username: ${{ secrets.docker-username }}
           docker-password: ${{ secrets.docker-password }}
           jreleaser-version: ${{ inputs.jreleaser-version }}
+          setup-java: 'false'
