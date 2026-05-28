@@ -40,6 +40,10 @@ inputs:
     description: 'JReleaser version'
     required: false
     default: 'latest'
+  setup-java:
+    description: 'Setup JReleaser internal Java runtime'
+    required: false
+    default: 'true'
   arguments:
     description: 'JReleaser arguments'
     required: false
@@ -66,6 +70,7 @@ runs:
         arguments: ${{ inputs.arguments }}
         version: ${{ inputs.jreleaser-version }}
         working-directory: ${{ inputs.working-directory }}
+        setup-java: ${{ inputs.setup-java }}
       env:
         JRELEASER_GIT_ROOT_SEARCH: ${{ inputs.git-root-search }}
         JRELEASER_GITHUB_TOKEN: ${{ inputs.git-access-token }}
