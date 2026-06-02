@@ -23,6 +23,11 @@ on:
         default: 'build'
         required: false
         type: string
+      prepull-images:
+        description: 'Space- or newline-separated container images to docker pull (with retries) before running Gradle. Useful for Testcontainers-based tests to avoid transient registry pull timeouts (e.g. the Ryuk reaper).'
+        default: ''
+        required: false
+        type: string
       coverage-results-path:
         description: 'Optional JaCoCo XML report glob to publish from this job'
         default: ''
@@ -122,6 +127,31 @@ jobs:
           aws-access-key-id: ${{ secrets.aws-access-key-id }}
           aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
           aws-region: ${{ inputs.aws-region }}
+
+      - name: Pre-pull container images
+        if: inputs.prepull-images != ''
+        shell: bash
+        env:
+          PREPULL_IMAGES: ${{ inputs.prepull-images }}
+        run: |
+          set -euo pipefail
+          read -r -a images <<< "$PREPULL_IMAGES"
+          max_attempts=5
+          for image in "${images[@]}"; do
+            echo "::group::Pulling $image"
+            attempt=1
+            until docker pull "$image"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::Failed to pull $image after $max_attempts attempts"
+                exit 1
+              fi
+              delay=$((attempt * 10))
+              echo "Pull of $image failed (attempt $attempt/$max_attempts); retrying in ${delay}s"
+              sleep "$delay"
+              attempt=$((attempt + 1))
+            done
+            echo "::endgroup::"
+          done
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew

@@ -17,6 +17,7 @@ Inputs:
 - `test-gradle-tasks`: task list for the default JVM test suite, typically `test`
 - `integration-gradle-tasks`: task list for additional JVM test suites, typically `integrationTest`
 - `package-gradle-tasks`: task list for packaging and assembly verification
+- `prepull-images`: optional space- or newline-separated container images to `docker pull` (with retries) before running Gradle on the integration test job (and the legacy single-job path); useful for Testcontainers-based tests to avoid transient registry pull timeouts such as the Ryuk reaper
 - `unit-coverage-results-path`: optional JaCoCo XML report glob to publish from the unit test job
 - `integration-coverage-results-path`: optional JaCoCo XML report glob to publish from the integration test job
 - `coverage-artifact-prefix`: optional prefix for uploaded coverage artifacts when coverage publishing is enabled
