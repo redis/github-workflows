@@ -53,6 +53,11 @@ on:
         default: '--parallel assemble'
         required: false
         type: string
+      prepull-images:
+        description: 'Space- or newline-separated container images to docker pull (with retries) before running Gradle. Applied to the integration test job (and the legacy single-job path). Useful for Testcontainers-based tests to avoid transient registry pull timeouts (e.g. the Ryuk reaper).'
+        default: ''
+        required: false
+        type: string
       unit-coverage-results-path:
         description: 'Optional JaCoCo XML report glob to publish from the unit test job'
         default: ''
@@ -135,6 +140,7 @@ jobs:
       java-version: ${{ inputs.java-version }}
       runs-on: ${{ inputs.runs-on }}
       gradle-tasks: ${{ inputs.gradle-tasks }}
+      prepull-images: ${{ inputs.prepull-images }}
       coverage-results-path: ${{ inputs.coverage-results-path }}
       coverage-report-name: 'Coverage'
       coverage-artifact-name: ${{ inputs.coverage-results-path != '' && format('{0}-all-tests', inputs.coverage-artifact-prefix) || '' }}
@@ -194,6 +200,7 @@ jobs:
       java-version: ${{ inputs.java-version }}
       runs-on: ${{ inputs.runs-on }}
       gradle-tasks: ${{ inputs.integration-gradle-tasks }}
+      prepull-images: ${{ inputs.prepull-images }}
       coverage-results-path: ${{ inputs.integration-coverage-results-path }}
       coverage-report-name: 'Integration Test Coverage'
       coverage-artifact-name: ${{ inputs.integration-coverage-results-path != '' && format('{0}-integration-tests', inputs.coverage-artifact-prefix) || '' }}
