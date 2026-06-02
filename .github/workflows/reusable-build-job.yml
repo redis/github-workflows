@@ -135,9 +135,11 @@ jobs:
           PREPULL_IMAGES: ${{ inputs.prepull-images }}
         run: |
           set -euo pipefail
-          read -r -a images <<< "$PREPULL_IMAGES"
+          # Disable globbing so image refs are not expanded, then split the input
+          # on whitespace (spaces and newlines) so both list styles are honored.
+          set -f
           max_attempts=5
-          for image in "${images[@]}"; do
+          for image in $PREPULL_IMAGES; do
             echo "::group::Pulling $image"
             attempt=1
             until docker pull "$image"; do
