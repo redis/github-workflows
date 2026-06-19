@@ -129,6 +129,9 @@ on:
       docker-password:
         description: 'Docker registry password (for bootBuildImage)'
         required: false
+      homebrew-tap-github-token:
+        description: 'GitHub token for pushing a Homebrew formula to a tap the default token cannot write (e.g. a cross-org tap)'
+        required: false
       aws-access-key-id:
         description: 'AWS access key ID (for pre-release-script, alternative to OIDC)'
         required: false
@@ -221,6 +224,7 @@ jobs:
           slack-webhook: ${{ secrets.slack-webhook }}
           docker-username: ${{ secrets.docker-username }}
           docker-password: ${{ secrets.docker-password }}
+          homebrew-tap-github-token: ${{ secrets.homebrew-tap-github-token }}
           jreleaser-version: ${{ inputs.jreleaser-version }}
           skip-announce: ${{ inputs.skip-announce }}
           working-directory: ${{ inputs.working-directory }}

@@ -36,6 +36,9 @@ inputs:
   docker-password:
     description: 'Docker registry password'
     required: false
+  homebrew-tap-github-token:
+    description: 'GitHub token for pushing a Homebrew formula to a tap repository the default GITHUB token cannot write (e.g. a cross-org tap). Exposed to JReleaser as the HOMEBREW_TAP_GITHUB_TOKEN env var.'
+    required: false
   jreleaser-version:
     description: 'JReleaser version'
     required: false
@@ -84,6 +87,9 @@ runs:
         JRELEASER_DOCKER_DEFAULT_USERNAME: ${{ inputs.docker-username }}
         JRELEASER_DOCKER_DEFAULT_PASSWORD: ${{ inputs.docker-password }}
         JRELEASER_PROJECT_VERSION: ${{ inputs.version }}
+        # Referenced by brew.repository.token as {{Env.HOMEBREW_TAP_GITHUB_TOKEN}}
+        # for taps the default JRELEASER_GITHUB_TOKEN cannot push to (e.g. cross-org).
+        HOMEBREW_TAP_GITHUB_TOKEN: ${{ inputs.homebrew-tap-github-token }}
 
     - name: Upload JReleaser Logs
       if: always()
