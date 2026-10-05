@@ -77,6 +77,23 @@ When a coverage path is configured for a split test job, the reusable workflow w
 
 This is intended for repositories that already generate coverage as part of an existing test job and want to avoid a separate coverage-only workflow job that reruns tests.
 
+## Homebrew publication
+
+For a tap that needs a separate credential, pass the `homebrew-tap-github-token`
+secret to `release.yml`. The JReleaser action exposes it as
+`JRELEASER_HOMEBREW_GITHUB_TOKEN`, the supported Homebrew credential variable.
+The original `HOMEBREW_TAP_GITHUB_TOKEN` environment variable remains available
+for custom hooks.
+
+Omit `distributions.<name>.brew.repository.token` from `jreleaser.yml` so
+JReleaser can resolve the credential from the environment. That field accepts a
+literal credential, not a template: setting it to
+`'{{Env.HOMEBREW_TAP_GITHUB_TOKEN}}'` sends the template text as the credential
+and overrides environment lookup.
+
+When migrating a consumer, deploy this action update before removing the
+consumer's token override. Keep the caller's existing secret name and mapping.
+
 ## SonarQube Cloud
 
 For SonarQube Cloud, prefer the legacy single-job path so the Gradle scanner runs in the same workspace and invocation as compilation, tests, and coverage generation. This follows SonarSource's recommended Gradle pattern and avoids a second test run solely for analysis.

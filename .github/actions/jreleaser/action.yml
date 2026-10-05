@@ -37,7 +37,7 @@ inputs:
     description: 'Docker registry password'
     required: false
   homebrew-tap-github-token:
-    description: 'GitHub token for pushing a Homebrew formula to a tap repository the default GITHUB token cannot write (e.g. a cross-org tap). Exposed to JReleaser as the HOMEBREW_TAP_GITHUB_TOKEN env var.'
+    description: 'GitHub token for pushing a Homebrew formula to a tap repository the default GITHUB token cannot write (e.g. a cross-org tap). Exposed as JRELEASER_HOMEBREW_GITHUB_TOKEN; omit brew.repository.token from the JReleaser configuration.'
     required: false
   jreleaser-version:
     description: 'JReleaser version'
@@ -87,8 +87,10 @@ runs:
         JRELEASER_DOCKER_DEFAULT_USERNAME: ${{ inputs.docker-username }}
         JRELEASER_DOCKER_DEFAULT_PASSWORD: ${{ inputs.docker-password }}
         JRELEASER_PROJECT_VERSION: ${{ inputs.version }}
-        # Referenced by brew.repository.token as {{Env.HOMEBREW_TAP_GITHUB_TOKEN}}
-        # for taps the default JRELEASER_GITHUB_TOKEN cannot push to (e.g. cross-org).
+        # JReleaser resolves Homebrew credentials from this supported variable.
+        # brew.repository.token is literal and must not contain an Env template.
+        JRELEASER_HOMEBREW_GITHUB_TOKEN: ${{ inputs.homebrew-tap-github-token }}
+        # Retain the original variable for consumers that use it in custom hooks.
         HOMEBREW_TAP_GITHUB_TOKEN: ${{ inputs.homebrew-tap-github-token }}
 
     - name: Upload JReleaser Logs
