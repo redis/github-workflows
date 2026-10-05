@@ -11,6 +11,10 @@ inputs:
   dest-repo:
     description: 'Destination repository (e.g., owner/repo-dist)'
     required: true
+  release-tag:
+    description: 'Release tag whose assets should be synchronized when the destination release already exists'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -22,3 +26,22 @@ runs:
         src_repo: ${{ inputs.source-repo }}
         dest_repo: ${{ inputs.dest-repo }}
         copy_assets: true
+
+    - name: Synchronize release assets
+      if: inputs.release-tag != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.git-access-token }}
+        SOURCE_REPO: ${{ inputs.source-repo }}
+        DEST_REPO: ${{ inputs.dest-repo }}
+        RELEASE_TAG: ${{ inputs.release-tag }}
+      run: |
+        set -euo pipefail
+
+        ASSET_DIR=$(mktemp -d)
+        trap 'rm -rf "$ASSET_DIR"' EXIT
+
+        gh release download "$RELEASE_TAG" --repo "$SOURCE_REPO" --dir "$ASSET_DIR"
+        while IFS= read -r -d '' ASSET; do
+          gh release upload "$RELEASE_TAG" "$ASSET" --repo "$DEST_REPO" --clobber
+        done < <(find "$ASSET_DIR" -maxdepth 1 -type f -print0)

@@ -252,6 +252,7 @@ jobs:
           git-access-token: ${{ secrets.git-access-token }}
           source-repo: ${{ github.repository }}
           dest-repo: ${{ github.repository }}-dist
+          release-tag: ${{ inputs.tag-prefix }}${{ steps.release.outputs.version }}
 
       - name: Update Antora Version
         if: inputs.update-antora-version
